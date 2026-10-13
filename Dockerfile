@@ -1,4 +1,4 @@
-# BCHN-SOLO builds CashStratum, the BCH-specific CKPool-derived mining engine.
+# BCHN-SOLO packages CashStratum, the BCH-specific CKPool-derived engine.
 # Pin the upstream release deliberately; review upstream changes before upgrading.
 FROM debian:bookworm-slim AS build
 
@@ -24,16 +24,18 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates libzmq5 python3 \
     && rm -rf /var/lib/apt/lists/* \
-    && useradd --system --uid 10001 --home-dir /data --shell /usr/sbin/nologin pool
+    && useradd --system --uid 1000 --home-dir /data --shell /usr/sbin/nologin pool
 
 COPY --from=build /src/src/ckpool /usr/local/bin/ckpool
 COPY docker/entrypoint.py /usr/local/bin/bchn-solo-entrypoint
-RUN chmod 0755 /usr/local/bin/bchn-solo-entrypoint \
+COPY docker/setup_server.py /usr/local/bin/bchn-solo-setup-server
+COPY web/index.html /opt/www/index.html
+RUN chmod 0755 /usr/local/bin/bchn-solo-entrypoint /usr/local/bin/bchn-solo-setup-server \
     && mkdir -p /data /tmp/bchn-solo \
     && chown -R pool:pool /data /tmp/bchn-solo
 
 ENV DATA_DIR=/data
-EXPOSE 3333/tcp
+EXPOSE 3333/tcp 8080/tcp
 VOLUME ["/data"]
 USER pool
 ENTRYPOINT ["python3", "/usr/local/bin/bchn-solo-entrypoint"]
