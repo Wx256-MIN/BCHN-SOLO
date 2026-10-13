@@ -2,14 +2,13 @@ manifestVersion: 1
 id: wxbch-solo-pool
 category: bitcoin
 name: BCHN-SOLO
-version: "0.1.3"
+version: "0.2.0"
 tagline: Self-hosted Bitcoin Cash solo-mining pool
 description: >-
   A private Bitcoin Cash solo-mining pool using a CKPool-derived CashStratum
-  engine and your existing Bitcoin Cash Node. Configure a BCH CashAddr in the
-  setup page, then point Stratum V1 ASIC miners to your Umbrel LAN address on
-  port 3333. The default operator fee is 0%. This app does not include a
-  monitoring dashboard.
+  engine and your existing Bitcoin Cash Node. Includes live pool/node health,
+  hashrate, workers, recent accepted/rejected shares, and event monitoring,
+  plus payout-address setup. Stratum V1 ASIC miners connect on port 3333.
 developer: Wx256-MIN
 icon: https://raw.githubusercontent.com/Wx256-MIN/BCHN-SOLO/main/wxbch-solo-pool/icon.svg
 website: https://github.com/Wx256-MIN/BCHN-SOLO
@@ -19,5 +18,5 @@ repo: https://github.com/Wx256-MIN/BCHN-SOLO
 support: https://github.com/Wx256-MIN/BCHN-SOLO/issues
 port: 8080
 gallery: []
-releaseNotes: "Fix persistent data directory ownership for payout setup and pool logs. Regtest end-to-end validation is still required before mainnet mining."
+releaseNotes: "Add a live monitoring dashboard powered by CashStratum read-only operator API, including node health, hashrate, shares and recent pool events."
 defaultPassword: ""
