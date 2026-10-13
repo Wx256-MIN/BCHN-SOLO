@@ -87,6 +87,38 @@ def _safe_activity(lines):
     return selected
 
 
+
+def _safe_block_events(lines):
+    """Return recent block-solve/submission events parsed from pool logs."""
+    markers = (
+        "block accepted", "block rejected", "possible block solve",
+        "solved and confirmed block", "block candidate", "submitblock",
+        "block found", "block solved", "submitted block",
+    )
+    events = []
+    for line in reversed(lines):
+        low = line.lower()
+        if not any(marker in low for marker in markers):
+            continue
+        timestamp = None
+        match = re.search(r"\\[(\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?)\\]", line)
+        if match:
+            timestamp = match.group(1)
+        if "reject" in low or "failed" in low:
+            result = "Rejected"
+        elif "accept" in low or "confirmed" in low:
+            result = "Accepted"
+        elif "possible" in low or "candidate" in low or "found" in low or "solved" in low:
+            result = "Candidate"
+        else:
+            result = "Submitted"
+        safe_line = re.sub(r"\\b(?:\\d{1,3}\\.){3}\\d{1,3}(?::\\d+)?\\b", "[redacted-ip]", line)
+        safe_line = re.sub(r"bitcoincash:[qp][a-z0-9]{30,}", "bitcoincash:…", safe_line)
+        events.append({"timestamp": timestamp, "result": result, "details": safe_line[:320]})
+        if len(events) >= 50:
+            break
+    return events
+
 def _safe_share(share):
     createdate = str(share.get("createdate", ""))
     try:
@@ -201,6 +233,7 @@ def _collect_dashboard():
             "rejected": rejected,
         },
         "shares": safe_shares[-20:][::-1],
+        "blocks": _safe_block_events(lines),
         "activity": _safe_activity(lines),
         "errors": errors,
     }
