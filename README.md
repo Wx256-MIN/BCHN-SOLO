@@ -74,7 +74,7 @@ Use a valid BCH CashAddr that you control. Verify every character before connect
 
 ## UmbrelOS
 
-The repository includes a community app-store package and a GHCR image publishing workflow. The app still needs installation and runtime validation on an actual Umbrel device, followed by a BCHN regtest end-to-end test. Do not point mainnet miners at an untested image.
+The repository includes a community app-store package and a GHCR image publishing workflow. The Umbrel Compose app includes a one-time permissions init container to make the shared `/data` directory writable by the UID 1000 web and pool processes. The app still needs installation and runtime validation on an actual Umbrel device, followed by a BCHN regtest end-to-end test. Do not point mainnet miners at an untested image.
 
 The Umbrel Compose file uses the official `bitcoin-cash-node` app's RPC endpoint on port `8332` and hash-block ZMQ endpoint on port `28332`. If your node is from a different community app store or uses custom ports, verify its connection settings before installation.
 
