@@ -8,7 +8,7 @@ This repository packages [CashStratum](https://github.com/cashstratum/cashstratu
 
 - Engine source pinned to CashStratum `v1.2.4` at image build time.
 - Docker image build and Compose deployment files are provided.
-- **Not yet certified for production:** the image still needs to build successfully in CI and pass BCHN regtest end-to-end testing before mainnet mining.
+- **Container build verified:** GitHub Actions successfully built the image for both `linux/amd64` and `linux/arm64` on the draft branch. This verifies compilation and packaging only; BCHN regtest end-to-end testing is still required before mainnet mining.
 - No web dashboard is included. The pool listens for Stratum V1 miners on TCP port `3333`.
 
 ## Features and defaults
