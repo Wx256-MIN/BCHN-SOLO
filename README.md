@@ -11,6 +11,7 @@ This repository packages [CashStratum](https://github.com/cashstratum/cashstratu
 - The published image is intended to be available at `ghcr.io/wx256-min/bchn-solo:latest`. Verify that it can be pulled on your Umbrel before relying on it.
 - CI verifies compilation and packaging only. BCHN regtest end-to-end testing (miner connection, share handling, and block-candidate submission) is still required before mainnet mining.
 - A browser monitoring dashboard displays pool/node health, hashrate, workers/users, sampled accepted/rejected shares, and recent pool events. The private CashStratum operator API key stays server-side and the API listens only on the internal Docker network. The pool listens for Stratum V1 miners on TCP port `3333`.
+- The pool preflights its generated config using CashStratum's parser, uses integer difficulty fields, places ZMQ at the BCHN node's `zmqnotify` field, and enables sharelog output for monitoring.
 
 ## Features and defaults
 
