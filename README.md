@@ -10,7 +10,7 @@ This repository packages [CashStratum](https://github.com/cashstratum/cashstratu
 - **Main-branch image build and publish workflow succeeded** for `linux/amd64` and `linux/arm64`.
 - The published image is intended to be available at `ghcr.io/wx256-min/bchn-solo:latest`. Verify that it can be pulled on your Umbrel before relying on it.
 - CI verifies compilation and packaging only. BCHN regtest end-to-end testing (miner connection, share handling, and block-candidate submission) is still required before mainnet mining.
-- No web dashboard is included. The pool listens for Stratum V1 miners on TCP port `3333`.
+- A browser monitoring dashboard displays pool/node health, hashrate, workers/users, sampled accepted/rejected shares, and recent pool events. The private CashStratum operator API key stays server-side and the API listens only on the internal Docker network. The pool listens for Stratum V1 miners on TCP port `3333`.
 
 ## Features and defaults
 
@@ -74,7 +74,7 @@ Use a valid BCH CashAddr that you control. Verify every character before connect
 
 ## UmbrelOS
 
-The repository includes a community app-store package and a GHCR image publishing workflow. The Umbrel Compose app includes a one-time permissions init container to make the shared `/data` directory writable by the UID 1000 web and pool processes. The app still needs installation and runtime validation on an actual Umbrel device, followed by a BCHN regtest end-to-end test. Do not point mainnet miners at an untested image.
+The repository includes a community app-store package and a GHCR image publishing workflow. The Umbrel Compose app initializes shared `/data` permissions and a private operator API key, then runs the pool, read-only monitoring API, and setup/dashboard web server. The app still needs installation and runtime validation on an actual Umbrel device, followed by a BCHN regtest end-to-end test. Do not point mainnet miners at an untested image.
 
 The Umbrel Compose file uses the official `bitcoin-cash-node` app's RPC endpoint on port `8332` and hash-block ZMQ endpoint on port `28332`. If your node is from a different community app store or uses custom ports, verify its connection settings before installation.
 
