@@ -7,13 +7,15 @@ services:
     container_name: bchn-solo
     restart: unless-stopped
     init: true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       BCHN_RPC_URL: ${BCHN_RPC_URL:?Set BCHN_RPC_URL in .env}
       BCHN_RPC_USER: ${BCHN_RPC_USER:?Set BCHN_RPC_USER in .env}
       BCHN_RPC_PASSWORD: ${BCHN_RPC_PASSWORD:?Set BCHN_RPC_PASSWORD in .env}
       BCH_PAYOUT_ADDRESS: ${BCH_PAYOUT_ADDRESS:?Set BCH_PAYOUT_ADDRESS in .env}
-      BCHN_ZMQ_ENABLED: ${BCHN_ZMQ_ENABLED:-true}
-      BCHN_ZMQ_URL: ${BCHN_ZMQ_URL:-tcp://127.0.0.1:28332}
+      BCHN_ZMQ_ENABLED: ${BCHN_ZMQ_ENABLED:-false}
+      BCHN_ZMQ_URL: ${BCHN_ZMQ_URL:-tcp://host.docker.internal:28332}
       POOL_FEE_PERCENT: ${POOL_FEE_PERCENT:-0}
       MIN_SHARE_DIFFICULTY: ${MIN_SHARE_DIFFICULTY:-1}
       START_SHARE_DIFFICULTY: ${START_SHARE_DIFFICULTY:-42}
