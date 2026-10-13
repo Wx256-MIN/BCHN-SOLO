@@ -1,5 +1,5 @@
-# License status
+# License and attribution
 
-The upstream project identifies its license in the upstream repository's `LICENSE.txt`. Before redistributing a derived build, copy the complete GPL-3.0 license and preserve upstream copyright and attribution notices. Until that file and upstream source have been imported, this repository is scaffolding and should not be represented as a complete distributable fork.
+The pool engine is based on [CashStratum](https://github.com/cashstratum/cashstratum), a BCH-specific fork in the CKPool lineage. CashStratum and CKPool-derived code are licensed under the GNU General Public License, version 3 or later. The full license text is included in [COPYING](COPYING).
 
-Upstream: https://github.com/benjamin-wilson/public-pool
+This repository's Dockerfile builds the pinned upstream CashStratum release rather than silently replacing its mining implementation. Keep the upstream copyright notices and license when modifying or redistributing the engine.

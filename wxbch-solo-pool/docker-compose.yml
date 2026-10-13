@@ -1,0 +1,43 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: wxbch-solo-pool_web_1
+      APP_PORT: 8080
+
+  web:
+    image: ghcr.io/wx256-min/bchn-solo:latest
+    entrypoint: ["python3", "/usr/local/bin/bchn-solo-setup-server"]
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      DATA_DIR: /data
+
+  pool:
+    image: ghcr.io/wx256-min/bchn-solo:latest
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - "3333:3333/tcp"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      DATA_DIR: /data
+      BCHN_RPC_URL: ${APP_BITCOIN_CASH_NODE_NODE_IP}:${APP_BITCOIN_CASH_NODE_RPC_PORT}
+      BCHN_RPC_USER: ${APP_BITCOIN_CASH_NODE_RPC_USER}
+      BCHN_RPC_PASSWORD: ${APP_BITCOIN_CASH_NODE_RPC_PASS}
+      BCHN_ZMQ_ENABLED: "true"
+      BCHN_ZMQ_URL: tcp://${APP_BITCOIN_CASH_NODE_NODE_IP}:${APP_BITCOIN_CASH_NODE_ZMQ_HASHBLOCK_PORT}
+      POOL_FEE_PERCENT: "0"
+      MIN_SHARE_DIFFICULTY: "1"
+      START_SHARE_DIFFICULTY: "42"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
