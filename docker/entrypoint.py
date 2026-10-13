@@ -4,6 +4,7 @@ import json
 import os
 import pathlib
 import subprocess
+import shutil
 import sys
 import time
 
@@ -18,6 +19,7 @@ data_dir = pathlib.Path(os.environ.get("DATA_DIR", "/data"))
 data_dir.mkdir(parents=True, exist_ok=True)
 config_path = data_dir / "cashstratum.conf"
 settings_path = data_dir / "settings.json"
+socket_dir = pathlib.Path("/tmp/bchn-solo")
 
 payout_address = os.environ.get("BCH_PAYOUT_ADDRESS", "").strip()
 if not payout_address:
@@ -75,7 +77,7 @@ config_temp.replace(config_path)
 # This catches invalid types (including difficulty fields) without contacting BCHN.
 check = subprocess.run(
     ["/usr/local/bin/ckpool", "-T", "-B", "-L", "-c", str(config_path),
-     "-n", "bchn-solo", "-s", "/tmp/bchn-solo"],
+     "-n", "bchn-solo", "-s", str(socket_dir)],
     stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=15,
 )
 if check.returncode != 0:
@@ -90,6 +92,15 @@ if check.returncode != 0:
     raise SystemExit(check.returncode or 1)
 
 print("CashStratum configuration check passed.")
+
+# Docker restart reuses the container's writable layer, so /tmp may retain
+# main.pid and Unix sockets from a prior ckpool process that has already exited.
+# This entrypoint is the new container PID 1; the prior pool process cannot
+# survive a container restart. Remove only this private runtime socket directory.
+if socket_dir.exists():
+    print("Removing stale pool PID/socket files from the previous container run.")
+    shutil.rmtree(socket_dir)
+
 print("Starting CKPool-derived CashStratum in solo mode on TCP 3333 with share logging enabled.")
 print("RPC credentials are not printed. Verify the payout CashAddr before mining.")
 os.execv("/usr/local/bin/ckpool", [
