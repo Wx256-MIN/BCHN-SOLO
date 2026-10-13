@@ -5,6 +5,7 @@ import os
 import pathlib
 import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlsplit
 
 DATA_DIR = pathlib.Path(os.environ.get("DATA_DIR", "/data"))
 SETTINGS = DATA_DIR / "settings.json"
@@ -12,8 +13,20 @@ WEB_ROOT = pathlib.Path("/opt/www")
 ADDRESS_RE = re.compile(r"^bitcoincash:[qp][a-z0-9]{41,}$")
 
 class Handler(BaseHTTPRequestHandler):
+    def route_path(self):
+        # Support both direct access and reverse proxies that retain the app URL prefix.
+        path = urlsplit(self.path).path.rstrip("/") or "/"
+        if path.endswith("/api/settings"):
+            return "/api/settings"
+        if path.endswith("/index.html"):
+            return "/index.html"
+        if path == "/" or re.fullmatch(r"/[A-Za-z0-9_-]+", path):
+            return "/"
+        return path
+
     def do_GET(self):
-        if self.path == "/api/settings":
+        path = self.route_path()
+        if path == "/api/settings":
             address = ""
             try:
                 address = json.loads(SETTINGS.read_text(encoding="utf-8")).get("payout_address", "")
@@ -27,7 +40,7 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(payload)
             return
-        if self.path not in ("/", "/index.html"):
+        if path not in ("/", "/index.html"):
             self.send_error(404)
             return
         body = (WEB_ROOT / "index.html").read_bytes()
@@ -40,7 +53,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_POST(self):
-        if self.path != "/api/settings":
+        if self.route_path() != "/api/settings":
             self.send_error(404)
             return
         try:
