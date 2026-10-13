@@ -1,38 +1,87 @@
 # BCHN-SOLO
 
-A work-in-progress effort to adapt [Public Pool](https://github.com/benjamin-wilson/public-pool) for Bitcoin Cash Node (BCHN) and UmbrelOS.
+**A self-hosted Bitcoin Cash solo-mining pool built on the CKPool lineage.**
 
-> **Status: scaffolding only — not ready for mining.** This package contains deployment guidance and configuration templates. The upstream Public Pool code uses Bitcoin-specific RPC, transaction, address, and proof-of-work assumptions. Do not connect miners to this project until those paths have been deliberately ported and tested against BCHN.
+This repository packages [CashStratum](https://github.com/cashstratum/cashstratum), an actively maintained BCH-specific CKPool fork, for a small, private, zero-fee solo pool using your existing Bitcoin Cash Node (BCHN). It is not a reimplementation of the mining protocol; the upstream C engine performs Stratum, job construction, share validation, and block submission.
 
-## Goals
+## Current status
 
-- Preserve upstream GPL-3.0 licensing and attribution when importing upstream source.
-- Connect to an existing BCHN node through authenticated RPC.
-- Use BCH-compatible block templates, coinbase construction, address handling, proof-of-work validation, and block submission.
-- Support Stratum V1 ASICs and accurate accepted/rejected/stale share accounting.
-- Package the service for UmbrelOS via Docker with persistent data and health checks.
+- Engine source pinned to CashStratum `v1.2.4` at image build time.
+- Docker image build and Compose deployment files are provided.
+- **Not yet certified for production:** the image still needs to build successfully in CI and pass BCHN regtest end-to-end testing before mainnet mining.
+- No web dashboard is included. The pool listens for Stratum V1 miners on TCP port `3333`.
 
-## Architecture plan
+## Features and defaults
 
-1. **Node adapter:** BCHN RPC configuration, chain/network identity checks, ZMQ block notifications (if enabled), timeouts and reconnects.
-2. **BCH consensus layer:** verify BCH network rules and mining serialization; do not assume Bitcoin block templates or coinbase serialization are interchangeable.
-3. **Stratum:** handle miner sessions, jobs, share difficulty, validation, duplicate/stale share classification, and candidate block submission via BCHN RPC.
-4. **Observability:** pool health, node height, workers, accepted/rejected/stale shares, and useful rejection reasons.
-5. **Umbrel:** non-root container, env-file configuration, state volume, restart policy, and documented RPC networking.
+- Solo mining: a miner's BCH CashAddr in the Stratum username is the payout destination.
+- `POOL_FEE_PERCENT=0` by default.
+- BCHN JSON-RPC for templates and block submission; optional BCHN ZMQ block notifications.
+- Persistent data and logs under the Docker volume `/data`.
+- Multi-architecture container build intended for `linux/amd64` and `linux/arm64`.
+- Runs as an unprivileged container user.
 
-## Safety and current limitations
+## 1. Prepare BCHN
 
-- This repository is not yet a functioning or audited pool.
-- Do not expose BCHN RPC to the public internet. Prefer a private Docker network or LAN, strong RPC credentials, and firewall rules.
-- Scope `rpcallowip` only to the pool's actual network; do not copy broad subnet examples blindly.
-- Never commit a real `.env`, RPC password, wallet private key, TLS private key, or other secret.
-- An accepted share is not a block; a submitted candidate still needs BCHN acceptance.
-- Mainnet mining must not be attempted before regtest testing verifies template parsing, coinbase construction, share validation, and block submission.
+Your existing BCHN node must be fully synced and able to serve `getblocktemplate`. Configure authenticated RPC for the pool container and do not expose RPC to the public internet. If enabling ZMQ, configure BCHN to publish raw block notifications and ensure the pool container can reach the configured ZMQ endpoint.
 
-## Development
+Do not assume `127.0.0.1` inside the pool container points to BCHN; it points to the pool container itself. Use a reachable node hostname or IP and the RPC port configured on your node.
 
-The first milestone is to port and test the upstream code—not just rename `BITCOIN_*` environment variables. See [UPSTREAM.md](UPSTREAM.md) and [docs/BCHN_PORTING.md](docs/BCHN_PORTING.md).
+## 2. Configure the pool
 
-## License
+```sh
+git clone https://github.com/Wx256-MIN/BCHN-SOLO.git
+cd BCHN-SOLO
+cp .env.example .env
+```
 
-The upstream project is GPL-3.0. Any distributed derivative must retain the applicable license and required notices. See [LICENSE-STATUS.md](LICENSE-STATUS.md) for current import status.
+Edit `.env` and set:
+- `BCHN_RPC_URL`: BCHN RPC host and port, such as `192.168.1.20:8332`.
+- `BCHN_RPC_USER` and `BCHN_RPC_PASSWORD`: the RPC credentials configured on your node.
+- `BCH_PAYOUT_ADDRESS`: your own valid mainnet BCH CashAddr.
+- `BCHN_ZMQ_ENABLED`: set to `true` only after ZMQ is configured and reachable; otherwise keep it `false`.
+- Keep `POOL_FEE_PERCENT=0` for zero-fee solo mining.
+
+Never commit `.env`. Use strong RPC credentials and restrict RPC to the private network.
+
+## 3. Build and start
+
+```sh
+docker compose build
+docker compose up -d
+docker compose logs -f bchn-solo
+```
+
+The first build downloads the pinned CashStratum release source and compiles it inside the image. This requires internet access during the image build. To stop the pool:
+
+```sh
+docker compose down
+```
+
+The `/data` volume preserves configuration and logs across restarts.
+
+## 4. Configure a miner
+
+Use your Umbrel/BCHN host's LAN IP address (not `localhost`) and these settings:
+
+| Miner field | Value |
+| --- | --- |
+| Pool URL | `stratum+tcp://YOUR_UMBREL_LAN_IP:3333` |
+| Username | `bitcoincash:q...YOUR_VALID_CASHADDR[.worker]` |
+| Password | `x` |
+
+Use a valid BCH CashAddr that you control. Verify every character before connecting a miner: the solo pool builds the winning coinbase payout from the address supplied by the miner. A share is not a block, and a block candidate is not a reward until BCHN accepts it and consensus maturity requirements are met.
+
+## UmbrelOS
+
+The Compose configuration is a development/self-host deployment starting point. A community-app-store package and published GHCR image still need to be validated before this repository can be described as one-click installable on UmbrelOS. Do not point mainnet miners at an untested image.
+
+## Upstream and licensing
+
+The mining engine is [CashStratum](https://github.com/cashstratum/cashstratum), derived from CKPool and licensed under GPL-3.0. See [UPSTREAM.md](UPSTREAM.md) and [COPYING](COPYING). The Dockerfile pins the upstream source tag; review upstream changes before changing that pin.
+
+## Security notes
+
+- Never publish BCHN RPC credentials or expose RPC to the internet.
+- Do not commit `.env`, wallet seeds, private keys, or passwords.
+- Check that the payout address belongs to you before mining.
+- Treat a public Stratum port as an untrusted network service; use LAN/VPN access unless you intentionally harden and expose it.
