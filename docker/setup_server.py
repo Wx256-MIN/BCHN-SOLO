@@ -133,19 +133,32 @@ def _collect_dashboard():
     shares = share_data.get("shares") if isinstance(share_data.get("shares"), list) else []
     safe_shares = [_safe_share(s) for s in shares if isinstance(s, dict)]
     counted = [s for s in safe_shares if s["result"] is not None]
-    # CashStratum /stats reports cumulative pool counters since this pool
-    # process started: "shares" is the number of accounted shares and
-    # "rejected" is the cumulative rejected-share count. Do not derive the
-    # headline totals from the capped /shares?limit=100 sample.
-    try:
-        total_shares = max(0, int(stats.get("shares", 0)))
-        total_rejected = max(0, int(stats.get("rejected", 0)))
-        total_rejected = min(total_rejected, total_shares)
-        accepted = total_shares - total_rejected
-        rejected = total_rejected
-    except (TypeError, ValueError, OverflowError):
-        accepted = None
-        rejected = None
+    # CashStratum's /stats endpoint does not expose cumulative accepted and
+    # rejected share counters. Its Pool log records do expose accepted/rejected
+    # metrics, but on a fresh process those may still be zero while older share
+    # records remain in the API. Prefer explicit log counters when they are
+    # present and non-zero; otherwise show counts from the API's recent sample
+    # rather than rendering blank cards. The sample size is returned separately
+    # so the UI can disclose when it is showing sampled rather than round totals.
+    def _counter(value):
+        try:
+            number = int(float(value))
+            return max(0, number)
+        except (TypeError, ValueError, OverflowError):
+            return None
+
+    log_accepted = _counter(pool_metrics.get("accepted"))
+    log_rejected = _counter(pool_metrics.get("rejected"))
+    sample_accepted = sum(1 for share in counted if share["result"] is True)
+    sample_rejected = sum(1 for share in counted if share["result"] is False)
+    has_log_counters = (log_accepted is not None and log_rejected is not None
+                        and (log_accepted > 0 or log_rejected > 0))
+    if has_log_counters:
+        accepted, rejected = log_accepted, log_rejected
+        counter_source = "pool-log"
+    else:
+        accepted, rejected = sample_accepted, sample_rejected
+        counter_source = "recent-sample"
     api_up = bool(health) and health.get("status") == "ok"
     log_exists = bool(health.get("log_exists"))
     if api_up and log_exists and stats:
@@ -183,7 +196,7 @@ def _collect_dashboard():
         },
         "share_summary": {
             "sampled": len(counted),
-            "scope": "pool-lifetime",
+            "scope": counter_source,
             "accepted": accepted,
             "rejected": rejected,
         },
