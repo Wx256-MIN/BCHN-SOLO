@@ -6,12 +6,25 @@ services:
       APP_HOST: wxbch-solo-pool_web_1
       APP_PORT: 8080
 
+  # Umbrel may create APP_DATA_DIR/data as root-owned. Fix permissions
+  # once before the non-root web and pool processes need to write settings/logs.
+  init_perms:
+    image: ghcr.io/wx256-min/bchn-solo:latest
+    user: "0:0"
+    entrypoint: ["sh", "-c", "mkdir -p /data && chown -R 1000:1000 /data"]
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+
   web:
     image: ghcr.io/wx256-min/bchn-solo:latest
     entrypoint: ["python3", "/usr/local/bin/bchn-solo-setup-server"]
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
+    depends_on:
+      init_perms:
+        condition: service_completed_successfully
     volumes:
       - ${APP_DATA_DIR}/data:/data
     environment:
@@ -22,6 +35,9 @@ services:
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
+    depends_on:
+      init_perms:
+        condition: service_completed_successfully
     ports:
       - "3333:3333/tcp"
     volumes:
