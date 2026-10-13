@@ -11,7 +11,7 @@ services:
   init_perms:
     image: ghcr.io/wx256-min/bchn-solo:latest
     user: "0:0"
-    entrypoint: ["sh", "-c", "mkdir -p /data && if [ ! -s /data/api.key ]; then umask 077; head -c 48 /dev/urandom | od -An -v -tx1 | tr -d ' \\n' > /data/api.key; fi && chown -R 1000:1000 /data && chmod 600 /data/api.key"]
+    entrypoint: ["sh", "-c", "mkdir -p /data && if [ ! -s /data/api.key ]; then umask 077; head -c 48 /dev/urandom | od -An -v -tx1 | tr -d '[:space:]' > /data/api.key; fi && chown -R 1000:1000 /data && chmod 600 /data/api.key"]
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data:/data
