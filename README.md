@@ -7,8 +7,9 @@ This repository packages [CashStratum](https://github.com/cashstratum/cashstratu
 ## Current status
 
 - Engine source pinned to CashStratum `v1.2.4` at image build time.
-- Docker image build and Compose deployment files are provided.
-- **Container build verified:** GitHub Actions successfully built the image for both `linux/amd64` and `linux/arm64` on the draft branch. This verifies compilation and packaging only; BCHN regtest end-to-end testing is still required before mainnet mining.
+- **Main-branch image build and publish workflow succeeded** for `linux/amd64` and `linux/arm64`.
+- The published image is intended to be available at `ghcr.io/wx256-min/bchn-solo:latest`. Verify that it can be pulled on your Umbrel before relying on it.
+- CI verifies compilation and packaging only. BCHN regtest end-to-end testing (miner connection, share handling, and block-candidate submission) is still required before mainnet mining.
 - No web dashboard is included. The pool listens for Stratum V1 miners on TCP port `3333`.
 
 ## Features and defaults
@@ -22,7 +23,7 @@ This repository packages [CashStratum](https://github.com/cashstratum/cashstratu
 
 ## 1. Prepare BCHN
 
-Your existing BCHN node must be fully synced and able to serve `getblocktemplate`. Configure authenticated RPC for the pool container and do not expose RPC to the public internet. If enabling ZMQ, configure BCHN to publish raw block notifications and ensure the pool container can reach the configured ZMQ endpoint.
+Your existing BCHN node must be fully synced and able to serve `getblocktemplate`. Configure authenticated RPC for the pool container and do not expose RPC to the public internet. If enabling ZMQ, configure BCHN to publish hash-block notifications and ensure the pool container can reach the configured ZMQ endpoint.
 
 Do not assume `127.0.0.1` inside the pool container points to BCHN; it points to the pool container itself. Use a reachable node hostname or IP and the RPC port configured on your node.
 
@@ -73,7 +74,9 @@ Use a valid BCH CashAddr that you control. Verify every character before connect
 
 ## UmbrelOS
 
-The Compose configuration is a development/self-host deployment starting point. A community-app-store package and published GHCR image still need to be validated before this repository can be described as one-click installable on UmbrelOS. Do not point mainnet miners at an untested image.
+The repository includes a community app-store package and a GHCR image publishing workflow. The app still needs installation and runtime validation on an actual Umbrel device, followed by a BCHN regtest end-to-end test. Do not point mainnet miners at an untested image.
+
+The Umbrel Compose file uses the official `bitcoin-cash-node` app's RPC endpoint on port `8332` and hash-block ZMQ endpoint on port `28332`. If your node is from a different community app store or uses custom ports, verify its connection settings before installation.
 
 ## Upstream and licensing
 
