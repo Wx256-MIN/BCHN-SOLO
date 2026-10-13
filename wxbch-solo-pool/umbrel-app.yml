@@ -2,7 +2,7 @@ manifestVersion: 1
 id: wxbch-solo-pool
 category: bitcoin
 name: BCHN-SOLO
-version: "0.2.4"
+version: "0.2.5"
 tagline: Self-hosted Bitcoin Cash solo-mining pool
 description: >-
   A private Bitcoin Cash solo-mining pool using a CKPool-derived CashStratum
@@ -18,5 +18,5 @@ repo: https://github.com/Wx256-MIN/BCHN-SOLO
 support: https://github.com/Wx256-MIN/BCHN-SOLO/issues
 port: 8080
 gallery: []
-releaseNotes: "Build with portable SHA code rather than CPU-specific instructions selected from the CI builder, fixing invalid-opcode crashes on older hardware."
+releaseNotes: "Accepted and rejected share cards now show cumulative pool counters since startup instead of counts from the latest 100 share records."
 defaultPassword: ""
