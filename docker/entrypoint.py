@@ -79,7 +79,14 @@ check = subprocess.run(
     stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=15,
 )
 if check.returncode != 0:
-    print("CashStratum rejected its generated configuration. See the startup output above.", file=sys.stderr)
+    # Show the useful parser output while keeping payout address and RPC secrets private.
+    details = check.stdout or ""
+    for secret in (rpc_user, rpc_pass, payout_address):
+        if secret:
+            details = details.replace(secret, "[redacted]")
+    if details.strip():
+        print(details[-3000:], file=sys.stderr)
+    print("CashStratum rejected its generated configuration.", file=sys.stderr)
     raise SystemExit(check.returncode or 1)
 
 print("CashStratum configuration check passed.")
