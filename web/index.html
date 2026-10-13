@@ -36,7 +36,7 @@ code{overflow-wrap:anywhere}
 <script>
 const form=document.getElementById('setup'), input=document.getElementById('address'), msg=document.getElementById('message');
 // Umbrel serves apps below an app-specific URL prefix; do not call the host root.
-const apiPath=(window.location.pathname.replace(/\\/+$/,'')||'')+'/api/settings';
+const apiPath=(window.location.pathname.replace(/\/+$/,'')||'')+'/api/settings';
 async function readJsonResponse(r){
   const type=(r.headers.get('content-type')||'').toLowerCase();
   if(!type.includes('application/json')){
