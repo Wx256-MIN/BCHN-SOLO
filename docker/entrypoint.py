@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Create a private CashStratum config from environment and launch CKPool solo mode."""
+"""Create CashStratum config and start the CKPool-derived engine."""
 import json
 import os
 import pathlib
 import subprocess
 import sys
+import time
 
 def required(name):
     value = os.environ.get(name, "").strip()
@@ -16,26 +17,33 @@ def required(name):
 data_dir = pathlib.Path(os.environ.get("DATA_DIR", "/data"))
 data_dir.mkdir(parents=True, exist_ok=True)
 config_path = data_dir / "cashstratum.conf"
+settings_path = data_dir / "settings.json"
+
+payout_address = os.environ.get("BCH_PAYOUT_ADDRESS", "").strip()
+if not payout_address:
+    print("No BCH_PAYOUT_ADDRESS supplied; waiting for the payout address in the Umbrel setup page.")
+    while not settings_path.exists():
+        time.sleep(3)
+    try:
+        payout_address = json.loads(settings_path.read_text(encoding="utf-8")).get("payout_address", "").strip()
+    except (OSError, ValueError, AttributeError):
+        payout_address = ""
+    if not payout_address:
+        raise SystemExit("The saved payout address is empty or invalid; open the pool setup page and save a BCH CashAddr.")
 
 rpc_url = required("BCHN_RPC_URL")
 rpc_user = required("BCHN_RPC_USER")
 rpc_pass = required("BCHN_RPC_PASSWORD")
-payout_address = required("BCH_PAYOUT_ADDRESS")
 pool_fee = float(os.environ.get("POOL_FEE_PERCENT", "0"))
 if not 0 <= pool_fee <= 100:
     raise SystemExit("POOL_FEE_PERCENT must be between 0 and 100")
 if pool_fee != 0:
     print("WARNING: operator fee is not zero; review POOL_FEE_PERCENT.", file=sys.stderr)
 
-notify = os.environ.get("BCHN_ZMQ_ENABLED", "true").lower() in ("1", "true", "yes", "on")
+notify = os.environ.get("BCHN_ZMQ_ENABLED", "false").lower() in ("1", "true", "yes", "on")
 zmq_url = os.environ.get("BCHN_ZMQ_URL", "tcp://127.0.0.1:28332")
 config = {
-    "btcd": [{
-        "url": rpc_url,
-        "auth": rpc_user,
-        "pass": rpc_pass,
-        "notify": notify
-    }],
+    "btcd": [{"url": rpc_url, "auth": rpc_user, "pass": rpc_pass, "notify": notify}],
     "bchaddress": payout_address,
     "pooladdress": payout_address,
     "poolfee": pool_fee,
@@ -56,7 +64,7 @@ if notify:
 
 config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
 os.chmod(config_path, 0o600)
-(pathlib.Path(data_dir) / "logs").mkdir(exist_ok=True)
+(data_dir / "logs").mkdir(exist_ok=True)
 print("Starting CKPool-derived CashStratum in solo mode on TCP 3333.")
 print("RPC credentials are not printed. Verify the payout CashAddr before mining.")
 os.execv("/usr/local/bin/ckpool", [
