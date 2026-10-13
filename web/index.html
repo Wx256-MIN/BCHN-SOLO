@@ -33,8 +33,8 @@ button,input{font:inherit}button{cursor:pointer}.shell{max-width:1180px;margin:a
     <article class="card"><div class="metric-row"><span class="card-label">Pool hashrate</span><span class="mini-chip">1 minute</span></div><div id="hashrate" class="big">—</div><div id="hashrateFoot" class="card-foot">5m average: —</div></article>
     <article class="card"><div class="metric-row"><span class="card-label">Active workers</span><span class="mini-chip">Stratum</span></div><div id="workers" class="big">—</div><div class="card-foot">Connected miner workers</div></article>
     <article class="card"><div class="metric-row"><span class="card-label">Mining users</span><span class="mini-chip">Accounts</span></div><div id="users" class="big">—</div><div class="card-foot">Distinct users seen by pool</div></article>
-    <article class="card"><div class="metric-row"><span class="card-label">Accepted shares</span><span class="mini-chip">Sample</span></div><div id="accepted" class="big">—</div><div id="acceptedFoot" class="card-foot">Latest share records</div></article>
-    <article class="card"><div class="metric-row"><span class="card-label">Rejected shares</span><span class="mini-chip">Sample</span></div><div id="rejected" class="big">—</div><div id="rejectedFoot" class="card-foot">Latest share records</div></article>
+    <article class="card"><div class="metric-row"><span class="card-label">Accepted shares</span><span class="mini-chip">Pool total</span></div><div id="accepted" class="big">—</div><div id="acceptedFoot" class="card-foot">Latest share records</div></article>
+    <article class="card"><div class="metric-row"><span class="card-label">Rejected shares</span><span class="mini-chip">Pool total</span></div><div id="rejected" class="big">—</div><div id="rejectedFoot" class="card-foot">Latest share records</div></article>
     <article class="card"><div class="metric-row"><span class="card-label">Best share</span><span class="mini-chip">Difficulty</span></div><div id="bestshare" class="big">—</div><div class="card-foot">Best submitted share difficulty</div></article>
     <article class="card"><div class="metric-row"><span class="card-label">Pool luck</span><span class="mini-chip">Round</span></div><div id="luck" class="big">—</div><div class="card-foot">Pool round luck from engine logs</div></article>
   </section>
@@ -59,7 +59,7 @@ button,input{font:inherit}button{cursor:pointer}.shell{max-width:1180px;margin:a
   <section class="card" style="margin-top:15px">
     <div class="section-head"><h3>Recent shares</h3><small id="shareCaption">Latest share-log entries</small></div>
     <div class="table-wrap"><table><thead><tr><th>Time</th><th>Worker</th><th>Share diff</th><th>Result</th><th>Reason</th></tr></thead><tbody id="shareRows"><tr><td colspan="5" class="empty">Waiting for share data…</td></tr></tbody></table></div>
-    <div class="inline-note">Accepted/rejected counts are calculated from the latest sample shown by the pool API, not lifetime totals. Miner IP addresses and payout usernames are intentionally not shown.</div>
+    <div class="inline-note">Accepted/rejected headline counts are cumulative pool totals since the current pool process started; the Recent shares table remains a limited recent sample. Miner IP addresses and payout usernames are intentionally not shown.</div>
   </section>
 
   <details class="panel" id="setupPanel">
@@ -101,7 +101,7 @@ function applyDashboard(d){const status=d.status||'unavailable',health=d.health|
   text('poolStatus',status==='online'?'ONLINE':status==='starting'?'STARTING':'OFFLINE');text('poolStatusChip',status.toUpperCase());text('poolStatusFoot',health.log_exists?'Pool log detected':health.api_up?'API is up; waiting for pool log':(errors.stats||errors.health||'Waiting for monitoring API'));
   const rate1=pool.hashrate1m||stats.hashrate;text('hashrate',rate1||'0 H/s');text('hashrateFoot','5m average: '+(pool.hashrate5m||'—')+' · 1h: '+(pool.hashrate1hr||'—'));
   text('workers',stats.workers===undefined?'—':fmtNum(stats.workers));text('users',stats.users===undefined?'—':fmtNum(stats.users));
-  text('accepted',fmtNum(summary.accepted??0));text('rejected',fmtNum(summary.rejected??0));const sample=summary.sampled??0;text('acceptedFoot','From latest '+sample+' share records');text('rejectedFoot','From latest '+sample+' share records');
+  text('accepted',summary.accepted===null||summary.accepted===undefined?'—':fmtNum(summary.accepted));text('rejected',summary.rejected===null||summary.rejected===undefined?'—':fmtNum(summary.rejected));text('acceptedFoot','Since pool started');text('rejectedFoot','Since pool started');const sample=summary.sampled??0;
   text('bestshare',fmtDifficulty(pool.bestshare));text('luck',num(pool.luck)===null?'—':fmtNum(pool.luck)+'%');
   const height=stats.block_height??node.blocks;text('height',height===undefined||height===null?'—':fmtNum(height));text('headers',node.headers===undefined?'—':fmtNum(node.headers));text('chain',node.chain||'—');text('netdiff',fmtDifficulty(node.difficulty));
   const synced=node.synced===true;const nodeKnown=Object.keys(node).length>0;text('chainChip',!nodeKnown?'Node status unavailable':synced?'Synced':node.ibd===true?'Initial sync':'Behind headers');
