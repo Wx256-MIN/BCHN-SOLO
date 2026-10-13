@@ -62,8 +62,11 @@ config = {
 if notify:
     config["zmqblock"] = zmq_url
 
-config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
-os.chmod(config_path, 0o600)
+config_temp = config_path.with_suffix(".tmp")
+config_temp.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+os.chmod(config_temp, 0o600)
+# Atomically publish the complete config so the monitoring API never reads a partial file.
+config_temp.replace(config_path)
 (data_dir / "logs").mkdir(exist_ok=True)
 print("Starting CKPool-derived CashStratum in solo mode on TCP 3333.")
 print("RPC credentials are not printed. Verify the payout CashAddr before mining.")
