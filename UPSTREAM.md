@@ -1,11 +1,13 @@
-# Upstream and licensing
+# Upstream engine and design
 
-This project is intended as a derivative-work port of:
+BCHN-SOLO packages the BCH-specific CKPool-derived engine [CashStratum](https://github.com/cashstratum/cashstratum).
 
-- Project: [benjamin-wilson/public-pool](https://github.com/benjamin-wilson/public-pool)
-- Upstream description: TypeScript/NestJS Bitcoin Stratum mining server
-- Upstream license file: [LICENSE.txt](https://github.com/benjamin-wilson/public-pool/blob/master/LICENSE.txt) (GPL-3.0)
+- Upstream source: https://github.com/cashstratum/cashstratum
+- Pinned release: `v1.2.4` (see `ARG CASHSTRATUM_REF` in the Dockerfile)
+- License: GPL-3.0-or-later; see [COPYING](COPYING)
+- BCHN support: reference node in CashStratum's installation guide
+- Miner protocol: Stratum V1 on TCP 3333
+- Solo payout: miner CashAddr in the Stratum username
+- Default operator fee: 0%
 
-The upstream repository has not yet been copied into this repository. Before distributing a derived build, import the relevant source and the complete upstream license/copyright notices, then document modifications. Do not claim this repository already contains the upstream implementation.
-
-A correct BCHN port must review all Bitcoin-specific code paths, particularly RPC calls, block-template parsing, transaction/coinbase serialization, address decoding, proof-of-work target/hash handling, and candidate block submission. Configuration renaming alone is insufficient.
+The upstream project implements the consensus-sensitive mining engine. This repository focuses on container packaging, configuration, and deployment. Do not describe a build as production-ready until the exact image passes a BCHN regtest mining test and its build logs are available.
