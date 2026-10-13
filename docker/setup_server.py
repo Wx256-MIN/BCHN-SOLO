@@ -1,29 +1,218 @@
 #!/usr/bin/env python3
-"""Tiny setup page for headless Umbrel installs; no dashboard or external dependencies."""
+"""Umbrel setup page and read-only dashboard proxy for CashStratum's operator API."""
 import json
 import os
 import pathlib
 import re
 import sys
+import threading
+import time
+import urllib.error
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
 DATA_DIR = pathlib.Path(os.environ.get("DATA_DIR", "/data"))
 SETTINGS = DATA_DIR / "settings.json"
+API_KEY_FILE = DATA_DIR / "api.key"
 WEB_ROOT = pathlib.Path("/opt/www")
 ADDRESS_RE = re.compile(r"^bitcoincash:[qp][a-z0-9]{41,}$")
+POOL_API = "http://api:8888"
+DASHBOARD_CACHE_SECONDS = 12
+_DASH_LOCK = threading.Lock()
+_DASH_CACHE = {"expires": 0.0, "payload": None}
+
+
+def fetch_pool_api(path):
+    """Fetch authenticated engine metrics over the private Docker network."""
+    try:
+        key = API_KEY_FILE.read_text(encoding="utf-8").strip()
+        if not key:
+            return None, "Monitoring API key is empty"
+        req = urllib.request.Request(
+            POOL_API + path,
+            headers={"Authorization": "Bearer " + key, "Accept": "application/json"},
+            method="GET",
+        )
+        with urllib.request.urlopen(req, timeout=2.5) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+            if not isinstance(payload, dict):
+                return None, "Monitoring API returned an unexpected response"
+            return payload, None
+    except urllib.error.HTTPError as exc:
+        return None, f"Monitoring API returned HTTP {exc.code}"
+    except (urllib.error.URLError, TimeoutError, OSError):
+        return None, "Monitoring API is starting or unavailable"
+    except (ValueError, UnicodeDecodeError):
+        return None, "Monitoring API returned invalid JSON"
+
+
+def _pool_log_metrics(lines):
+    metrics = {}
+    for line in reversed(lines):
+        match = re.search(r"Pool:(\{.*\})", line)
+        if not match:
+            continue
+        try:
+            obj = json.loads(match.group(1))
+        except (ValueError, TypeError):
+            continue
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                metrics.setdefault(key, value)
+        if "hashrate1m" in metrics and "accepted" in metrics and "rejected" in metrics:
+            break
+    return metrics
+
+
+def _safe_activity(lines):
+    keywords = (
+        "BLOCK ACCEPTED", "BLOCK REJECTED", "Solved and confirmed block",
+        "Possible block solve", "Network diff set", "ERROR", "WARNING",
+        "Failed", "failed", "RPC", "authoris", "share",
+    )
+    selected = []
+    for line in reversed(lines):
+        if not any(word.lower() in line.lower() for word in keywords):
+            continue
+        line = re.sub(r"\b(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?\b", "[redacted-ip]", line)
+        line = re.sub(r"bitcoincash:[qp][a-z0-9]{30,}", "bitcoincash:…", line)
+        selected.append(line[:320])
+        if len(selected) >= 15:
+            break
+    return selected
+
+
+def _safe_share(share):
+    createdate = str(share.get("createdate", ""))
+    try:
+        timestamp = int(createdate.split(",", 1)[0])
+    except (ValueError, TypeError):
+        timestamp = None
+    worker = str(share.get("worker", "") or "default")
+    # Only send the worker suffix and share result to the browser. Do not send IP,
+    # payout username, user agent, or other connection-identifying fields.
+    return {
+        "timestamp": timestamp,
+        "worker": worker[:48],
+        "sdiff": share.get("sdiff"),
+        "diff": share.get("diff"),
+        "result": share.get("result") if isinstance(share.get("result"), bool) else None,
+        "reject_reason": str(share.get("reject-reason") or "")[:160],
+    }
+
+
+def _collect_dashboard():
+    paths = {
+        "health": "/health",
+        "stats": "/stats",
+        "tail": "/tail?lines=120",
+        "shares": "/shares?limit=100",
+    }
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = {name: executor.submit(fetch_pool_api, path) for name, path in paths.items()}
+        results = {name: future.result() for name, future in futures.items()}
+
+    data, errors = {}, {}
+    for name, (payload, error) in results.items():
+        if payload is not None:
+            data[name] = payload
+        if error:
+            errors[name] = error
+
+    health = data.get("health") or {}
+    stats = data.get("stats") or {}
+    tail = data.get("tail") or {}
+    share_data = data.get("shares") or {}
+    lines = tail.get("lines") if isinstance(tail.get("lines"), list) else []
+    pool_metrics = _pool_log_metrics(lines)
+    shares = share_data.get("shares") if isinstance(share_data.get("shares"), list) else []
+    safe_shares = [_safe_share(s) for s in shares if isinstance(s, dict)]
+    counted = [s for s in safe_shares if s["result"] is not None]
+    accepted = sum(1 for s in counted if s["result"] is True)
+    rejected = sum(1 for s in counted if s["result"] is False)
+    api_up = bool(health) and health.get("status") == "ok"
+    log_exists = bool(health.get("log_exists"))
+    if api_up and log_exists and stats:
+        status = "online"
+    elif api_up:
+        status = "starting"
+    else:
+        status = "unavailable"
+
+    return {
+        "generated_at": int(time.time()),
+        "status": status,
+        "health": {
+            "api_up": api_up,
+            "log_exists": log_exists,
+            "log_size": health.get("log_size"),
+            "uptime": health.get("uptime"),
+        },
+        "stats": {
+            "hashrate": stats.get("hashrate"),
+            "workers": stats.get("workers"),
+            "users": stats.get("users"),
+            "transactions": stats.get("transactions"),
+            "block_height": stats.get("block_height"),
+            "node": stats.get("node"),
+        },
+        "pool_metrics": {
+            "hashrate1m": pool_metrics.get("hashrate1m"),
+            "hashrate5m": pool_metrics.get("hashrate5m"),
+            "hashrate1hr": pool_metrics.get("hashrate1hr"),
+            "accepted_diff": pool_metrics.get("accepted"),
+            "rejected_diff": pool_metrics.get("rejected"),
+            "bestshare": pool_metrics.get("bestshare"),
+            "luck": pool_metrics.get("luck"),
+        },
+        "share_summary": {
+            "sampled": len(counted),
+            "accepted": accepted,
+            "rejected": rejected,
+        },
+        "shares": safe_shares[-20:][::-1],
+        "activity": _safe_activity(lines),
+        "errors": errors,
+    }
+
+
+def dashboard_snapshot():
+    now = time.monotonic()
+    with _DASH_LOCK:
+        if _DASH_CACHE["payload"] is not None and now < _DASH_CACHE["expires"]:
+            return _DASH_CACHE["payload"]
+        payload = _collect_dashboard()
+        _DASH_CACHE["payload"] = payload
+        _DASH_CACHE["expires"] = time.monotonic() + DASHBOARD_CACHE_SECONDS
+        return payload
+
 
 class Handler(BaseHTTPRequestHandler):
     def route_path(self):
-        # Support both direct access and reverse proxies that retain the app URL prefix.
+        # Accept paths with or without the Umbrel app URL prefix.
         path = urlsplit(self.path).path.rstrip("/") or "/"
-        if path.endswith("/api/settings"):
-            return "/api/settings"
+        for suffix in ("/api/settings", "/api/dashboard"):
+            if path.endswith(suffix):
+                return suffix
         if path.endswith("/index.html"):
             return "/index.html"
-        if path == "/" or re.fullmatch(r"/[A-Za-z0-9_-]+", path):
+        if path == "/" or path.endswith("/wxbch-solo-pool"):
+            return "/"
+        if re.fullmatch(r"/[A-Za-z0-9_-]+", path):
             return "/"
         return path
+
+    def send_json(self, payload, status=200):
+        body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def do_GET(self):
         path = self.route_path()
@@ -33,13 +222,14 @@ class Handler(BaseHTTPRequestHandler):
                 address = json.loads(SETTINGS.read_text(encoding="utf-8")).get("payout_address", "")
             except (OSError, ValueError, AttributeError):
                 pass
-            payload = json.dumps({"configured": bool(address), "payout_address": address}).encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Cache-Control", "no-store")
-            self.send_header("Content-Length", str(len(payload)))
-            self.end_headers()
-            self.wfile.write(payload)
+            self.send_json({"configured": bool(address), "payout_address": address})
+            return
+        if path == "/api/dashboard":
+            try:
+                self.send_json(dashboard_snapshot())
+            except Exception as exc:
+                print(f"Dashboard collection failed: {exc}", file=sys.stderr)
+                self.send_json({"status": "unavailable", "errors": {"dashboard": "Dashboard data is temporarily unavailable."}}, 200)
             return
         if path not in ("/", "/index.html"):
             self.send_error(404)
@@ -49,6 +239,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'self'")
         self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -70,25 +261,17 @@ class Handler(BaseHTTPRequestHandler):
             temp.write_text(json.dumps({"payout_address": address}, indent=2) + "\n", encoding="utf-8")
             os.chmod(temp, 0o600)
             temp.replace(SETTINGS)
-            payload = json.dumps({"ok": True, "message": "Address saved. The pool will start shortly."}).encode()
-            self.send_response(200)
+            self.send_json({"ok": True, "message": "Address saved. The pool will start shortly."})
         except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-            payload = json.dumps({"ok": False, "error": str(exc)}).encode()
-            self.send_response(400)
+            self.send_json({"ok": False, "error": str(exc)}, 400)
         except OSError as exc:
-            # Return JSON rather than dropping the connection if /data is unwritable.
             print(f"Could not save payout settings: {exc}", file=sys.stderr)
-            payload = json.dumps({"ok": False, "error": "Cannot write payout settings. Check the app data directory permissions and restart BCHN-SOLO."}).encode()
-            self.send_response(500)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("Content-Length", str(len(payload)))
-        self.end_headers()
-        self.wfile.write(payload)
+            self.send_json({"ok": False, "error": "Cannot write payout settings. Check the app data directory permissions and restart BCHN-SOLO."}, 500)
 
     def log_message(self, fmt, *args):
-        # Avoid writing form data or addresses to access logs.
+        # Avoid writing payout addresses or request details to logs.
         return
+
 
 if __name__ == "__main__":
     DATA_DIR.mkdir(parents=True, exist_ok=True)
