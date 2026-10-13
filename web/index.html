@@ -35,8 +35,34 @@ code{overflow-wrap:anywhere}
 </main>
 <script>
 const form=document.getElementById('setup'), input=document.getElementById('address'), msg=document.getElementById('message');
-async function load(){try{const r=await fetch('/api/settings',{cache:'no-store'});const d=await r.json();if(d.payout_address)input.value=d.payout_address;if(d.configured)msg.textContent='A payout address is already saved. You can replace it if needed.';}catch(e){msg.textContent='Could not load saved settings.';}}
-form.addEventListener('submit',async e=>{e.preventDefault();msg.textContent='Saving…';try{const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payout_address:input.value.trim()})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not save address');msg.textContent=d.message;}catch(e){msg.textContent=e.message;}});
+// Umbrel serves apps below an app-specific URL prefix; do not call the host root.
+const apiPath=(window.location.pathname.replace(/\\/+$/,'')||'')+'/api/settings';
+async function readJsonResponse(r){
+  const type=(r.headers.get('content-type')||'').toLowerCase();
+  if(!type.includes('application/json')){
+    await r.text();
+    throw new Error('The payout API returned a web page instead of JSON (HTTP '+r.status+'). Reload or update BCHN-SOLO, then try again.');
+  }
+  return r.json();
+}
+async function load(){
+  try{
+    const r=await fetch(apiPath,{cache:'no-store'});
+    const d=await readJsonResponse(r);
+    if(!r.ok)throw new Error(d.error||'Could not load saved settings');
+    if(d.payout_address)input.value=d.payout_address;
+    if(d.configured)msg.textContent='A payout address is already saved. You can replace it if needed.';
+  }catch(e){msg.textContent=e.message||'Could not load saved settings.';}
+}
+form.addEventListener('submit',async e=>{
+  e.preventDefault();msg.textContent='Saving…';
+  try{
+    const r=await fetch(apiPath,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payout_address:input.value.trim()})});
+    const d=await readJsonResponse(r);
+    if(!r.ok)throw new Error(d.error||'Could not save address');
+    msg.textContent=d.message||'Payout address saved.';
+  }catch(e){msg.textContent=e.message||'Could not save address.';}
+});
 load();
 </script>
 </body>
