@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BCHN-SOLO setup</title>
+<style>
+:root{color-scheme:dark light;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+body{max-width:680px;margin:3rem auto;padding:0 1.25rem;line-height:1.55}
+main{border:1px solid #8886;border-radius:14px;padding:1.4rem}
+h1{margin-top:0}label{display:block;font-weight:650;margin:.9rem 0 .35rem}
+input{box-sizing:border-box;width:100%;padding:.8rem;border:1px solid #888;border-radius:8px;font:inherit}
+button{margin-top:1rem;padding:.75rem 1rem;border:0;border-radius:8px;font:inherit;font-weight:650;cursor:pointer}
+small,.muted{opacity:.8}#message{margin-top:1rem;overflow-wrap:anywhere}
+code{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<main>
+<h1>BCHN-SOLO</h1>
+<p>CKPool-derived Bitcoin Cash solo mining pool. This is a setup page, not a monitoring dashboard.</p>
+<h2>1. Set your payout address</h2>
+<p>Enter a mainnet BCH CashAddr you control. Double-check it carefully. The address is saved on this Umbrel in the pool's persistent app data.</p>
+<form id="setup">
+<label for="address">BCH CashAddr</label>
+<input id="address" name="address" autocomplete="off" spellcheck="false" placeholder="bitcoincash:q..." required>
+<button type="submit">Save payout address</button>
+</form>
+<p id="message" role="status" aria-live="polite"></p>
+<h2>2. Configure your miner</h2>
+<p><strong>Pool URL:</strong> <code>stratum+tcp://YOUR_UMBREL_LAN_IP:3333</code></p>
+<p><strong>Username:</strong> your valid BCH CashAddr, optionally followed by <code>.workername</code></p>
+<p><strong>Password:</strong> <code>x</code></p>
+<p class="muted">This pool defaults to a 0% operator fee. Shares are not blocks; a block candidate must be accepted by BCHN. Keep RPC private and only expose Stratum to networks you trust.</p>
+</main>
+<script>
+const form=document.getElementById('setup'), input=document.getElementById('address'), msg=document.getElementById('message');
+async function load(){try{const r=await fetch('/api/settings',{cache:'no-store'});const d=await r.json();if(d.payout_address)input.value=d.payout_address;if(d.configured)msg.textContent='A payout address is already saved. You can replace it if needed.';}catch(e){msg.textContent='Could not load saved settings.';}}
+form.addEventListener('submit',async e=>{e.preventDefault();msg.textContent='Saving…';try{const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payout_address:input.value.trim()})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not save address');msg.textContent=d.message;}catch(e){msg.textContent=e.message;}});
+load();
+</script>
+</body>
+</html>
