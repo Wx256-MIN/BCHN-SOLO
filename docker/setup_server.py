@@ -4,6 +4,7 @@ import json
 import os
 import pathlib
 import re
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
@@ -74,6 +75,11 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
             payload = json.dumps({"ok": False, "error": str(exc)}).encode()
             self.send_response(400)
+        except OSError as exc:
+            # Return JSON rather than dropping the connection if /data is unwritable.
+            print(f"Could not save payout settings: {exc}", file=sys.stderr)
+            payload = json.dumps({"ok": False, "error": "Cannot write payout settings. Check the app data directory permissions and restart BCHN-SOLO."}).encode()
+            self.send_response(500)
         self.send_header("Content-Type", "application/json")
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(payload)))
