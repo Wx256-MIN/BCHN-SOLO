@@ -14,7 +14,39 @@ WORKDIR /src
 RUN git clone --depth 1 --branch "${CASHSTRATUM_REF}" \
     https://github.com/cashstratum/cashstratum.git /src
 
-# Avoid -march=native: the image must be portable across AMD64 and ARM64.
+# Do not let configure select SHA-NI, AVX, SSE4 or ARM crypto code based on
+# the CI/build machine's /proc/cpuinfo. This image must run on older CPUs too.
+# Replace CashStratum's host-CPU auto-detection block with portable C fallback
+# conditionals before autoreconf regenerates ./configure.
+RUN python3 - <<'PY'
+from pathlib import Path
+
+path = Path("/src/configure.ac")
+source = path.read_text()
+start_marker = "x86_shani=\\nrorx=\\navx1=\\nsse4=\\nsha2=\\n"
+end_marker = "AM_CONDITIONAL([HAVE_ARM_SHA2], [test x$sha2 = xsha2])"
+start = source.find(start_marker)
+if start < 0:
+    raise SystemExit("Cannot locate CashStratum CPU feature detection block")
+end = source.find(end_marker, start)
+if end < 0:
+    raise SystemExit("Cannot locate end of CashStratum CPU feature detection block")
+end += len(end_marker)
+replacement = """# BCHN-SOLO portable build: disable builder-dependent CPU-specific implementations.
+x86_shani=
+rorx=
+avx1=
+sse4=
+sha2=
+AM_CONDITIONAL([HAVE_X86_SHANI], [false])
+AM_CONDITIONAL([HAVE_AVX2], [false])
+AM_CONDITIONAL([HAVE_AVX1], [false])
+AM_CONDITIONAL([HAVE_SSE4], [false])
+AM_CONDITIONAL([HAVE_ARM_SHA2], [false])"""
+path.write_text(source[:start] + replacement + source[end:])
+PY
+
+# Keep compiler flags generic and deliberately build with the portable SHA-256 implementation.
 RUN CFLAGS="-O2 -pipe" CXXFLAGS="-O2 -pipe" ./autogen.sh \
     && CFLAGS="-O2 -pipe" CXXFLAGS="-O2 -pipe" ./configure --disable-sv2 \
     && make -j2
