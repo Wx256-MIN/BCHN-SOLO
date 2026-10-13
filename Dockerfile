@@ -40,6 +40,7 @@ COPY docker/entrypoint.py /usr/local/bin/bchn-solo-entrypoint
 COPY docker/api_entrypoint.py /usr/local/bin/bchn-solo-api-entrypoint
 COPY docker/setup_server.py /usr/local/bin/bchn-solo-setup-server
 COPY web/index.html /opt/www/index.html
+COPY web/favicon.svg /opt/www/favicon.svg
 RUN chmod 0755 /usr/local/bin/bchn-solo-entrypoint /usr/local/bin/bchn-solo-api-entrypoint /usr/local/bin/bchn-solo-setup-server \
     && mkdir -p /data /tmp/bchn-solo \
     && chown -R pool:pool /data /tmp/bchn-solo
