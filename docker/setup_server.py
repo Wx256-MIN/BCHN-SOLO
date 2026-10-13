@@ -133,8 +133,19 @@ def _collect_dashboard():
     shares = share_data.get("shares") if isinstance(share_data.get("shares"), list) else []
     safe_shares = [_safe_share(s) for s in shares if isinstance(s, dict)]
     counted = [s for s in safe_shares if s["result"] is not None]
-    accepted = sum(1 for s in counted if s["result"] is True)
-    rejected = sum(1 for s in counted if s["result"] is False)
+    # CashStratum /stats reports cumulative pool counters since this pool
+    # process started: "shares" is the number of accounted shares and
+    # "rejected" is the cumulative rejected-share count. Do not derive the
+    # headline totals from the capped /shares?limit=100 sample.
+    try:
+        total_shares = max(0, int(stats.get("shares", 0)))
+        total_rejected = max(0, int(stats.get("rejected", 0)))
+        total_rejected = min(total_rejected, total_shares)
+        accepted = total_shares - total_rejected
+        rejected = total_rejected
+    except (TypeError, ValueError, OverflowError):
+        accepted = None
+        rejected = None
     api_up = bool(health) and health.get("status") == "ok"
     log_exists = bool(health.get("log_exists"))
     if api_up and log_exists and stats:
@@ -172,6 +183,7 @@ def _collect_dashboard():
         },
         "share_summary": {
             "sampled": len(counted),
+            "scope": "pool-lifetime",
             "accepted": accepted,
             "rejected": rejected,
         },
