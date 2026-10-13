@@ -23,7 +23,7 @@ from pathlib import Path
 
 path = Path("/src/configure.ac")
 source = path.read_text()
-start_marker = "x86_shani=\\nrorx=\\navx1=\\nsse4=\\nsha2=\\n"
+start_marker = "x86_shani="
 end_marker = "AM_CONDITIONAL([HAVE_ARM_SHA2], [test x$sha2 = xsha2])"
 start = source.find(start_marker)
 if start < 0:
