@@ -42,35 +42,50 @@ if pool_fee != 0:
 
 notify = os.environ.get("BCHN_ZMQ_ENABLED", "false").lower() in ("1", "true", "yes", "on")
 zmq_url = os.environ.get("BCHN_ZMQ_URL", "tcp://127.0.0.1:28332")
+btcd = {"url": rpc_url, "auth": rpc_user, "pass": rpc_pass, "notify": notify}
+if notify:
+    # CashStratum v1.2.4 reads each node's ZMQ endpoint from "zmqnotify".
+    btcd["zmqnotify"] = zmq_url
+
 config = {
-    "btcd": [{"url": rpc_url, "auth": rpc_user, "pass": rpc_pass, "notify": notify}],
+    "btcd": [btcd],
     "bchaddress": payout_address,
     "pooladdress": payout_address,
     "poolfee": pool_fee,
     "btcsig": os.environ.get("COINBASE_TAG", "BCHN-SOLO"),
-    "sockdir": "/tmp/bchn-solo",
     "blockpoll": int(os.environ.get("BLOCK_POLL_MS", "100")),
     "nonce1length": 4,
     "nonce2length": 8,
     "update_interval": int(os.environ.get("TEMPLATE_UPDATE_SECONDS", "30")),
     "serverurl": ["0.0.0.0:3333"],
-    "mindiff": float(os.environ.get("MIN_SHARE_DIFFICULTY", "1")),
-    "startdiff": float(os.environ.get("START_SHARE_DIFFICULTY", "42")),
+    # CashStratum parses both difficulty fields as JSON integers, not decimals.
+    "mindiff": int(os.environ.get("MIN_SHARE_DIFFICULTY", "1")),
+    "startdiff": int(os.environ.get("START_SHARE_DIFFICULTY", "42")),
     "maxdiff": 0,
     "logdir": str(data_dir / "logs")
 }
-if notify:
-    config["zmqblock"] = zmq_url
-
 config_temp = config_path.with_suffix(".tmp")
 config_temp.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
 os.chmod(config_temp, 0o600)
 # Atomically publish the complete config so the monitoring API never reads a partial file.
 config_temp.replace(config_path)
 (data_dir / "logs").mkdir(exist_ok=True)
-print("Starting CKPool-derived CashStratum in solo mode on TCP 3333.")
+
+# Run CashStratum's own config parser before bringing up the live listener.
+# This catches invalid types (including difficulty fields) without contacting BCHN.
+check = subprocess.run(
+    ["/usr/local/bin/ckpool", "-T", "-B", "-L", "-c", str(config_path),
+     "-n", "bchn-solo", "-s", "/tmp/bchn-solo"],
+    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=15,
+)
+if check.returncode != 0:
+    print("CashStratum rejected its generated configuration. See the startup output above.", file=sys.stderr)
+    raise SystemExit(check.returncode or 1)
+
+print("CashStratum configuration check passed.")
+print("Starting CKPool-derived CashStratum in solo mode on TCP 3333 with share logging enabled.")
 print("RPC credentials are not printed. Verify the payout CashAddr before mining.")
 os.execv("/usr/local/bin/ckpool", [
-    "/usr/local/bin/ckpool", "-B", "-c", str(config_path),
+    "/usr/local/bin/ckpool", "-B", "-L", "-c", str(config_path),
     "-n", "bchn-solo", "-s", "/tmp/bchn-solo"
 ])
