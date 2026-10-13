@@ -70,7 +70,10 @@ def _safe_activity(lines):
     keywords = (
         "BLOCK ACCEPTED", "BLOCK REJECTED", "Solved and confirmed block",
         "Possible block solve", "Network diff set", "ERROR", "WARNING",
-        "Failed", "failed", "RPC", "authoris", "share",
+        "Failed", "failed", "RPC", "authoris", "share", "bitcoind",
+        "no bitcoinds", "server alive", "block template", "template",
+        "getblocktemplate", "connected to live server", "bound serverurl",
+        "network diff", "critical", "reject",
     )
     selected = []
     for line in reversed(lines):
@@ -193,7 +196,7 @@ class Handler(BaseHTTPRequestHandler):
     def route_path(self):
         # Accept paths with or without the Umbrel app URL prefix.
         path = urlsplit(self.path).path.rstrip("/") or "/"
-        for suffix in ("/api/settings", "/api/dashboard"):
+        for suffix in ("/api/settings", "/api/dashboard", "/favicon.svg"):
             if path.endswith(suffix):
                 return suffix
         if path.endswith("/index.html"):
@@ -230,6 +233,20 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as exc:
                 print(f"Dashboard collection failed: {exc}", file=sys.stderr)
                 self.send_json({"status": "unavailable", "errors": {"dashboard": "Dashboard data is temporarily unavailable."}}, 200)
+            return
+        if path == "/favicon.svg":
+            try:
+                body = (WEB_ROOT / "favicon.svg").read_bytes()
+            except OSError:
+                self.send_error(404)
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "image/svg+xml; charset=utf-8")
+            self.send_header("Cache-Control", "public, max-age=3600")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
             return
         if path not in ("/", "/index.html"):
             self.send_error(404)
