@@ -11,7 +11,7 @@ services:
   init_perms:
     image: ghcr.io/wx256-min/bchn-solo:latest
     user: "0:0"
-    entrypoint: ["sh", "-c", "mkdir -p /data && chown -R 1000:1000 /data"]
+    entrypoint: ["sh", "-c", "mkdir -p /data && if [ ! -s /data/api.key ]; then umask 077; head -c 48 /dev/urandom | od -An -v -tx1 | tr -d ' \\n' > /data/api.key; fi && chown -R 1000:1000 /data && chmod 600 /data/api.key"]
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data:/data
@@ -29,6 +29,26 @@ services:
       - ${APP_DATA_DIR}/data:/data
     environment:
       DATA_DIR: /data
+
+  api:
+    image: ghcr.io/wx256-min/bchn-solo:latest
+    entrypoint: ["/usr/local/bin/bchn-solo-api-entrypoint"]
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      init_perms:
+        condition: service_completed_successfully
+      pool:
+        condition: service_started
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      DATA_DIR: /data
+      CASHSTRATUM_API_PORT: "8888"
+      CASHSTRATUM_LOG_PATH: /data/logs/bchn-solo.log
+      CASHSTRATUM_USER_LOGS_PATH: /data/logs/users
+      CASHSTRATUM_CONF_PATH: /data/cashstratum.conf
 
   pool:
     image: ghcr.io/wx256-min/bchn-solo:latest
