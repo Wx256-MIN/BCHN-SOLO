@@ -11,10 +11,11 @@ import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit
+from urllib.parse import urlencode, urlsplit
 
 DATA_DIR = pathlib.Path(os.environ.get("DATA_DIR", "/data"))
 SETTINGS = DATA_DIR / "settings.json"
+SHARE_COUNTERS = DATA_DIR / "share-counters.json"
 API_KEY_FILE = DATA_DIR / "api.key"
 WEB_ROOT = pathlib.Path("/opt/www")
 ADDRESS_RE = re.compile(r"^bitcoincash:[qp][a-z0-9]{41,}$")
@@ -143,7 +144,6 @@ def _collect_dashboard():
         "health": "/health",
         "stats": "/stats",
         "tail": "/tail?lines=120",
-        "shares": "/shares?limit=100",
     }
     with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {name: executor.submit(fetch_pool_api, path) for name, path in paths.items()}
@@ -159,38 +159,9 @@ def _collect_dashboard():
     health = data.get("health") or {}
     stats = data.get("stats") or {}
     tail = data.get("tail") or {}
-    share_data = data.get("shares") or {}
     lines = tail.get("lines") if isinstance(tail.get("lines"), list) else []
     pool_metrics = _pool_log_metrics(lines)
-    shares = share_data.get("shares") if isinstance(share_data.get("shares"), list) else []
-    safe_shares = [_safe_share(s) for s in shares if isinstance(s, dict)]
-    counted = [s for s in safe_shares if s["result"] is not None]
-    # CashStratum's /stats endpoint does not expose cumulative accepted and
-    # rejected share counters. Its Pool log records do expose accepted/rejected
-    # metrics, but on a fresh process those may still be zero while older share
-    # records remain in the API. Prefer explicit log counters when they are
-    # present and non-zero; otherwise show counts from the API's recent sample
-    # rather than rendering blank cards. The sample size is returned separately
-    # so the UI can disclose when it is showing sampled rather than round totals.
-    def _counter(value):
-        try:
-            number = int(float(value))
-            return max(0, number)
-        except (TypeError, ValueError, OverflowError):
-            return None
-
-    log_accepted = _counter(pool_metrics.get("accepted"))
-    log_rejected = _counter(pool_metrics.get("rejected"))
-    sample_accepted = sum(1 for share in counted if share["result"] is True)
-    sample_rejected = sum(1 for share in counted if share["result"] is False)
-    has_log_counters = (log_accepted is not None and log_rejected is not None
-                        and (log_accepted > 0 or log_rejected > 0))
-    if has_log_counters:
-        accepted, rejected = log_accepted, log_rejected
-        counter_source = "pool-log"
-    else:
-        accepted, rejected = sample_accepted, sample_rejected
-        counter_source = "recent-sample"
+    share_state = share_tracker_snapshot()
     api_up = bool(health) and health.get("status") == "ok"
     log_exists = bool(health.get("log_exists"))
     if api_up and log_exists and stats:
@@ -221,33 +192,206 @@ def _collect_dashboard():
             "hashrate1m": pool_metrics.get("hashrate1m"),
             "hashrate5m": pool_metrics.get("hashrate5m"),
             "hashrate1hr": pool_metrics.get("hashrate1hr"),
-            "accepted_diff": pool_metrics.get("accepted"),
-            "rejected_diff": pool_metrics.get("rejected"),
+            "accepted_difficulty": pool_metrics.get("accepted"),
+            "rejected_difficulty": pool_metrics.get("rejected"),
             "bestshare": pool_metrics.get("bestshare"),
             "luck": pool_metrics.get("luck"),
         },
         "share_summary": {
-            "sampled": len(counted),
-            "scope": counter_source,
-            "accepted": accepted,
-            "rejected": rejected,
+            "sampled": len(share_state["shares"]),
+            "scope": "tracked-since-start",
+            "accepted": share_state["accepted"] if share_state["initialized"] else None,
+            "rejected": share_state["rejected"] if share_state["initialized"] else None,
+            "tracker_ready": share_state["initialized"],
+            "tracking_started_at": share_state["started_at"],
+            "last_checked_at": share_state["last_checked_at"],
+            "tracker_error": share_state["error"],
         },
-        "shares": safe_shares[-20:][::-1],
+        "shares": share_state["shares"],
         "blocks": _safe_block_events(lines),
         "activity": _safe_activity(lines),
         "errors": errors,
     }
 
 
-def shares_snapshot():
-    """Return only sanitized recent share data for the one-second table refresh."""
-    payload, error = fetch_pool_api("/shares?limit=100")
+_SHARE_LOCK = threading.Lock()
+_SHARE_STATE = {
+    "initialized": False,
+    "cursor": None,
+    "accepted": 0,
+    "rejected": 0,
+    "started_at": None,
+    "last_checked_at": None,
+    "shares": [],
+    "error": None,
+}
+
+
+def _persist_share_state_locked():
+    """Persist only privacy-safe share fields and the opaque API cursor."""
+    data = {
+        "initialized": _SHARE_STATE["initialized"],
+        "cursor": _SHARE_STATE["cursor"],
+        "accepted": _SHARE_STATE["accepted"],
+        "rejected": _SHARE_STATE["rejected"],
+        "started_at": _SHARE_STATE["started_at"],
+        "last_checked_at": _SHARE_STATE["last_checked_at"],
+        "shares": _SHARE_STATE["shares"][-20:],
+    }
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    temp = SHARE_COUNTERS.with_suffix(".tmp")
+    temp.write_text(json.dumps(data, separators=(",", ":")) + "\n", encoding="utf-8")
+    os.chmod(temp, 0o600)
+    temp.replace(SHARE_COUNTERS)
+
+
+def _load_share_state():
+    """Restore persistent counters so restarts do not zero tracked counts."""
+    try:
+        data = json.loads(SHARE_COUNTERS.read_text(encoding="utf-8"))
+        if not isinstance(data, dict) or not data.get("initialized"):
+            return
+        cursor = data.get("cursor")
+        if not isinstance(cursor, str):
+            return
+        accepted = max(0, int(data.get("accepted", 0)))
+        rejected = max(0, int(data.get("rejected", 0)))
+        records = data.get("shares") if isinstance(data.get("shares"), list) else []
+        safe_records = []
+        for share in records:
+            if not isinstance(share, dict):
+                continue
+            result = share.get("result") if isinstance(share.get("result"), bool) else None
+            safe_records.append({
+                "timestamp": share.get("timestamp") if isinstance(share.get("timestamp"), int) else None,
+                "worker": str(share.get("worker") or "default")[:48],
+                "sdiff": share.get("sdiff"),
+                "diff": share.get("diff"),
+                "result": result,
+                "reject_reason": str(share.get("reject_reason") or "")[:160],
+            })
+        with _SHARE_LOCK:
+            _SHARE_STATE.update({
+                "initialized": True,
+                "cursor": cursor,
+                "accepted": accepted,
+                "rejected": rejected,
+                "started_at": data.get("started_at"),
+                "last_checked_at": data.get("last_checked_at"),
+                "shares": safe_records[-20:],
+                "error": None,
+            })
+    except FileNotFoundError:
+        return
+    except (OSError, ValueError, TypeError) as exc:
+        print(f"Share counter state could not be restored: {exc}", file=sys.stderr)
+
+
+def share_tracker_snapshot():
+    with _SHARE_LOCK:
+        return {
+            "initialized": _SHARE_STATE["initialized"],
+            "cursor": _SHARE_STATE["cursor"],
+            "accepted": _SHARE_STATE["accepted"],
+            "rejected": _SHARE_STATE["rejected"],
+            "started_at": _SHARE_STATE["started_at"],
+            "last_checked_at": _SHARE_STATE["last_checked_at"],
+            "shares": [dict(item) for item in _SHARE_STATE["shares"]],
+            "error": _SHARE_STATE["error"],
+        }
+
+
+def _set_share_tracker_error(error):
+    with _SHARE_LOCK:
+        _SHARE_STATE["error"] = str(error or "Share data is temporarily unavailable")[:200]
+
+
+def _poll_share_tracker():
+    snapshot = share_tracker_snapshot()
+    if not snapshot["initialized"]:
+        payload, error = fetch_pool_api("/shares?limit=1000")
+        if payload is None:
+            _set_share_tracker_error(error)
+            return
+        cursor = payload.get("next_cursor")
+        if not isinstance(cursor, str):
+            _set_share_tracker_error("CashStratum /shares did not return a resume cursor")
+            return
+        raw_shares = payload.get("shares") if isinstance(payload.get("shares"), list) else []
+        safe_shares = [_safe_share(item) for item in raw_shares if isinstance(item, dict)]
+        now = int(time.time())
+        with _SHARE_LOCK:
+            if not _SHARE_STATE["initialized"]:
+                # Bootstrap only the table. The API returns a recent snapshot,
+                # not lifetime history, so never pretend it is a lifetime count.
+                _SHARE_STATE.update({
+                    "initialized": True,
+                    "cursor": cursor,
+                    "accepted": 0,
+                    "rejected": 0,
+                    "started_at": now,
+                    "last_checked_at": now,
+                    "shares": list(reversed(safe_shares[-20:])),
+                    "error": None,
+                })
+                _persist_share_state_locked()
+        return
+
+    cursor = snapshot["cursor"]
+    if not isinstance(cursor, str):
+        _set_share_tracker_error("Share tracker has no valid resume cursor")
+        return
+    query = urlencode({"since": cursor, "limit": 1000})
+    payload, error = fetch_pool_api("/shares?" + query)
     if payload is None:
-        return None, error or "Share data is temporarily unavailable"
-    shares = payload.get("shares") if isinstance(payload.get("shares"), list) else []
-    safe_shares = [_safe_share(share) for share in shares if isinstance(share, dict)]
-    counted = [share for share in safe_shares if share["result"] is not None]
-    return {"shares": safe_shares[-20:][::-1], "sampled": len(counted)}, None
+        _set_share_tracker_error(error)
+        return
+    next_cursor = payload.get("next_cursor")
+    if not isinstance(next_cursor, str):
+        _set_share_tracker_error("CashStratum /shares did not return a resume cursor")
+        return
+    raw_shares = payload.get("shares") if isinstance(payload.get("shares"), list) else []
+    safe_shares = [_safe_share(item) for item in raw_shares if isinstance(item, dict)]
+    now = int(time.time())
+    with _SHARE_LOCK:
+        if _SHARE_STATE["cursor"] != cursor:
+            return
+        if next_cursor == cursor and safe_shares:
+            # Do not double-count if an upstream response violates cursor semantics.
+            _SHARE_STATE["error"] = "Share API returned records without advancing its cursor"
+            return
+        _SHARE_STATE["last_checked_at"] = now
+        _SHARE_STATE["error"] = None
+        if next_cursor != cursor:
+            _SHARE_STATE["cursor"] = next_cursor
+            _SHARE_STATE["accepted"] += sum(1 for item in safe_shares if item["result"] is True)
+            _SHARE_STATE["rejected"] += sum(1 for item in safe_shares if item["result"] is False)
+            if safe_shares:
+                _SHARE_STATE["shares"] = (list(reversed(safe_shares)) + _SHARE_STATE["shares"])[:20]
+            _persist_share_state_locked()
+
+
+def _share_tracker_loop():
+    # 20 upstream requests/minute, below the CashStratum shares endpoint rate limit.
+    while True:
+        try:
+            _poll_share_tracker()
+        except Exception as exc:
+            _set_share_tracker_error("Share tracker temporarily failed: " + str(exc))
+        time.sleep(3)
+
+
+def shares_snapshot():
+    """Serve cached, sanitized data to the dashboard without re-querying CashStratum."""
+    state = share_tracker_snapshot()
+    return {
+        "shares": state["shares"],
+        "sampled": len(state["shares"]),
+        "ready": state["initialized"],
+        "last_checked_at": state["last_checked_at"],
+        "tracking_started_at": state["started_at"],
+        "error": state["error"],
+    }, None
 
 
 def dashboard_snapshot():
@@ -368,4 +512,6 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _load_share_state()
+    threading.Thread(target=_share_tracker_loop, name="share-history-tracker", daemon=True).start()
     ThreadingHTTPServer(("0.0.0.0", 8080), Handler).serve_forever()
