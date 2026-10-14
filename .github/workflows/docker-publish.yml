@@ -18,8 +18,20 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Check Python entrypoint syntax
-        run: python3 -m py_compile docker/entrypoint.py docker/api_entrypoint.py docker/setup_server.py
+      - name: Check Python and dashboard JavaScript syntax
+        run: |
+          python3 -m py_compile docker/entrypoint.py docker/api_entrypoint.py docker/setup_server.py
+          python3 - <<'PY'
+          from pathlib import Path
+
+          page = Path("web/index.html").read_text(encoding="utf-8")
+          start = page.find("<script>")
+          end = page.find("</script>", start)
+          if start < 0 or end < 0:
+              raise SystemExit("Dashboard script block was not found")
+          Path("/tmp/bchn-solo-dashboard.js").write_text(page[start + len("<script>"):end], encoding="utf-8")
+          PY
+          node --check /tmp/bchn-solo-dashboard.js
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
