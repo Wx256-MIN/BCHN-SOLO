@@ -7,7 +7,7 @@ tagline: Self-hosted Bitcoin Cash solo-mining pool
 description: >-
   A private Bitcoin Cash solo-mining pool using a CKPool-derived CashStratum
   engine and your existing Bitcoin Cash Node. Includes live pool/node health,
-  hashrate, workers, recent accepted/rejected shares, block-find history, and event monitoring,
+  hashrate, workers, historical per-share counts, a block-found summary, and event monitoring,
   plus payout-address setup. Stratum V1 ASIC miners connect on port 3333.
 developer: Wx256-MIN
 icon: https://raw.githubusercontent.com/Wx256-MIN/BCHN-SOLO/main/wxbch-solo-pool/icon.svg
