@@ -207,9 +207,9 @@ function updateBlockSummary(items){
     return;
   }
   const details=String(latest.details||'');
-  const height=details.match(/\\b(?:block\\s*)?height\\s*[:=# ]\\s*(\\d{1,12})\\b/i);
-  const hash=details.match(/\\b(?:block\\s*)?hash\\s*[:= ]\\s*([a-f0-9]{16,64})\\b/i);
-  const reward=details.match(/\\breward\\s*[:= ]\\s*([0-9]+(?:\\.[0-9]+)?)\\s*(?:BCH)?/i);
+  const height=details.match(/\b(?:block\s*)?height\s*[:=# ]\s*(\d{1,12})\b/i);
+  const hash=details.match(/\b(?:block\s*)?hash\s*[:= ]\s*([a-f0-9]{16,64})\b/i);
+  const reward=details.match(/\breward\s*[:= ]\s*([0-9]+(?:\.[0-9]+)?)\s*(?:BCH)?/i);
   text('blockHeight',height?height[1]:'—');text('blockHash',hash?hash[1].slice(0,12)+'…':'—');
   text('blockReward',reward?reward[1]+' BCH':'— BCH');text('blockFoundBy','—');text('blockTime',latest.timestamp||'—');
   const label=latest.result==='Accepted'?'Accepted':latest.result==='Rejected'?'Rejected':latest.result==='Candidate'?'Candidate':(latest.result||'Submitted');
