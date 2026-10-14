@@ -220,7 +220,7 @@ function applyDashboard(d){const status=d.status||'unavailable',health=d.health|
   const height=stats.block_height??node.blocks;text('height',height===undefined||height===null?'—':fmtNum(height));text('headers',node.headers===undefined?'—':fmtNum(node.headers));text('chain',node.chain||'—');text('netdiff',fmtDifficulty(node.difficulty));
   const synced=node.synced===true;const nodeKnown=Object.keys(node).length>0;text('chainChip',!nodeKnown?'Node status unavailable':synced?'Synced':node.ibd===true?'Initial sync':'Behind headers');
   const progress=num(node.progress_pct);byId('syncProgress').style.width=(progress===null?0:Math.max(0,Math.min(100,progress)))+'%';text('syncNote',!nodeKnown?'Check BCHN RPC connectivity.':synced?'BCHN reports that initial download is complete.':'Sync progress: '+(progress===null?'unknown':fmtNum(progress)+'%')+'. Do not mine on a node that is not synced.');
-  showEvents(d.activity||[]);showShares(d.shares||[]);updateBlockSummary(d.blocks||[]);text('shareCaption',shareFeedCaption(sample,summary.last_checked_at,summary.tracker_ready));
+  showEvents(d.activity||[]);showShares(d.shares||[]);updateBlockSummary(d.blocks||[]);text('shareCaption',shareFeedCaption(sample,summary.last_checked_at,summary.tracker_ready,summary.tracker_error));
   const stamp=num(d.generated_at);text('updated',stamp===null?'Update time unavailable':'Updated '+new Date(stamp*1000).toLocaleTimeString());
 }
 async function refreshDashboard(){if(refreshing)return;refreshing=true;byId('refresh').disabled=true;try{const d=await jsonFetch(dashboardUrl);applyDashboard(d);}catch(e){byId('statusDot').className='dot offline';text('statusText','Dashboard error');text('poolStatus','UNAVAILABLE');text('poolStatusChip','ERROR');text('poolStatusFoot',e.message);}finally{refreshing=false;byId('refresh').disabled=false;}}
@@ -228,8 +228,8 @@ byId('refresh').addEventListener('click',refreshDashboard);
 form.addEventListener('submit',async e=>{e.preventDefault();setMessage('Saving payout address…');try{const d=await jsonFetch(settingsUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payout_address:input.value.trim()})});setMessage(d.message||'Payout address saved.','success');await refreshDashboard();}catch(err){setMessage(err.message||'Could not save payout address.','error');}});
 loadSettings();refreshDashboard();setInterval(refreshDashboard,15000);
 // Poll the lightweight shares-only endpoint every second while the shares tab is visible.
-function shareFeedCaption(sampled,lastChecked,ready){
-  if(!ready)return 'Starting share-history tracker…';
+function shareFeedCaption(sampled,lastChecked,ready,error){
+  if(!ready)return error?'Share tracker: '+error:'Starting share-history tracker…';
   const checked=num(lastChecked);
   return 'Latest '+sampled+' records · feed checked '+(checked===null?'—':new Date(checked*1000).toLocaleTimeString());
 }
@@ -239,7 +239,7 @@ async function refreshShares(){
   try{
     const d=await jsonFetch(sharesUrl);
     showShares(d.shares||[]);
-    text('shareCaption',shareFeedCaption(d.sampled??0,d.last_checked_at,d.ready===true));
+    text('shareCaption',shareFeedCaption(d.sampled??0,d.last_checked_at,d.ready===true,d.error));
   }catch(e){/* preserve current rows during transient refresh errors */}
   finally{sharesRefreshing=false;}
 }
