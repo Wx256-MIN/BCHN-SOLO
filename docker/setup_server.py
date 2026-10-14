@@ -202,6 +202,7 @@ def _collect_dashboard():
             "scope": "tracked-since-start",
             "accepted": share_state["accepted"] if share_state["initialized"] else None,
             "rejected": share_state["rejected"] if share_state["initialized"] else None,
+            "baseline_records": share_state["baseline_records"],
             "tracker_ready": share_state["initialized"],
             "tracking_started_at": share_state["started_at"],
             "last_checked_at": share_state["last_checked_at"],
@@ -220,6 +221,7 @@ _SHARE_STATE = {
     "cursor": None,
     "accepted": 0,
     "rejected": 0,
+    "baseline_records": 0,
     "started_at": None,
     "last_checked_at": None,
     "shares": [],
@@ -234,6 +236,7 @@ def _persist_share_state_locked():
         "cursor": _SHARE_STATE["cursor"],
         "accepted": _SHARE_STATE["accepted"],
         "rejected": _SHARE_STATE["rejected"],
+        "baseline_records": _SHARE_STATE["baseline_records"],
         "started_at": _SHARE_STATE["started_at"],
         "last_checked_at": _SHARE_STATE["last_checked_at"],
         "shares": _SHARE_STATE["shares"][-20:],
@@ -256,6 +259,7 @@ def _load_share_state():
             return
         accepted = max(0, int(data.get("accepted", 0)))
         rejected = max(0, int(data.get("rejected", 0)))
+        baseline_records = max(0, int(data.get("baseline_records", 0)))
         records = data.get("shares") if isinstance(data.get("shares"), list) else []
         safe_records = []
         for share in records:
@@ -276,6 +280,7 @@ def _load_share_state():
                 "cursor": cursor,
                 "accepted": accepted,
                 "rejected": rejected,
+                "baseline_records": baseline_records,
                 "started_at": data.get("started_at"),
                 "last_checked_at": data.get("last_checked_at"),
                 "shares": safe_records[-20:],
@@ -294,6 +299,7 @@ def share_tracker_snapshot():
             "cursor": _SHARE_STATE["cursor"],
             "accepted": _SHARE_STATE["accepted"],
             "rejected": _SHARE_STATE["rejected"],
+            "baseline_records": _SHARE_STATE["baseline_records"],
             "started_at": _SHARE_STATE["started_at"],
             "last_checked_at": _SHARE_STATE["last_checked_at"],
             "shares": [dict(item) for item in _SHARE_STATE["shares"]],
@@ -322,13 +328,16 @@ def _poll_share_tracker():
         now = int(time.time())
         with _SHARE_LOCK:
             if not _SHARE_STATE["initialized"]:
-                # Bootstrap only the table. The API returns a recent snapshot,
-                # not lifetime history, so never pretend it is a lifetime count.
+                # Count the individual records in this bootstrap sample, then add
+                # each new record after the cursor. The snapshot is not lifetime history.
+                baseline_accepted = sum(1 for item in safe_shares if item["result"] is True)
+                baseline_rejected = sum(1 for item in safe_shares if item["result"] is False)
                 _SHARE_STATE.update({
                     "initialized": True,
                     "cursor": cursor,
-                    "accepted": 0,
-                    "rejected": 0,
+                    "accepted": baseline_accepted,
+                    "rejected": baseline_rejected,
+                    "baseline_records": len(safe_shares),
                     "started_at": now,
                     "last_checked_at": now,
                     "shares": list(reversed(safe_shares[-20:])),
@@ -390,6 +399,7 @@ def shares_snapshot():
         "ready": state["initialized"],
         "last_checked_at": state["last_checked_at"],
         "tracking_started_at": state["started_at"],
+        "baseline_records": state["baseline_records"],
         "error": state["error"],
     }, None
 
