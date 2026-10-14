@@ -239,6 +239,17 @@ def _collect_dashboard():
     }
 
 
+def shares_snapshot():
+    """Return only sanitized recent share data for the one-second table refresh."""
+    payload, error = fetch_pool_api("/shares?limit=100")
+    if payload is None:
+        return None, error or "Share data is temporarily unavailable"
+    shares = payload.get("shares") if isinstance(payload.get("shares"), list) else []
+    safe_shares = [_safe_share(share) for share in shares if isinstance(share, dict)]
+    counted = [share for share in safe_shares if share["result"] is not None]
+    return {"shares": safe_shares[-20:][::-1], "sampled": len(counted)}, None
+
+
 def dashboard_snapshot():
     now = time.monotonic()
     with _DASH_LOCK:
@@ -254,7 +265,7 @@ class Handler(BaseHTTPRequestHandler):
     def route_path(self):
         # Accept paths with or without the Umbrel app URL prefix.
         path = urlsplit(self.path).path.rstrip("/") or "/"
-        for suffix in ("/api/settings", "/api/dashboard", "/favicon.svg"):
+        for suffix in ("/api/settings", "/api/dashboard", "/api/shares", "/favicon.svg"):
             if path.endswith(suffix):
                 return suffix
         if path.endswith("/index.html"):
@@ -284,6 +295,13 @@ class Handler(BaseHTTPRequestHandler):
             except (OSError, ValueError, AttributeError):
                 pass
             self.send_json({"configured": bool(address), "payout_address": address})
+            return
+        if path == "/api/shares":
+            payload, error = shares_snapshot()
+            if payload is None:
+                self.send_json({"error": error or "Share data is temporarily unavailable"}, 503)
+            else:
+                self.send_json(payload)
             return
         if path == "/api/dashboard":
             try:
