@@ -152,7 +152,7 @@ td{padding:9px}
     <div id="sharesPanel">
       <div class="section-head"><h3>Recent shares</h3><small id="shareCaption">Starting share-history tracker…</small></div>
       <div class="table-wrap"><table><thead><tr><th>Time</th><th>Worker</th><th>Share diff</th><th>Result</th><th>Reason</th></tr></thead><tbody id="shareRows"><tr><td colspan="5" class="empty">Waiting for share data…</td></tr></tbody></table></div>
-      <div class="inline-note">Accepted and rejected cards count individual share records observed since tracking began. Earlier historical totals cannot be reconstructed from the initial API snapshot. Miner IP addresses and payout usernames are intentionally not shown.</div>
+      <div class="inline-note">Accepted and rejected cards count individual records from the initial API sample (up to 1,000) plus new records tracked afterward. The API sample does not provide complete lifetime totals, so older history may be missing. Miner IP addresses and payout usernames are intentionally not shown.</div>
     </div>
   </section>
 
@@ -215,7 +215,7 @@ function applyDashboard(d){const status=d.status||'unavailable',health=d.health|
   text('poolStatus',status==='online'?'ONLINE':status==='starting'?'STARTING':'OFFLINE');text('poolStatusChip',status.toUpperCase());text('poolStatusFoot',health.log_exists?'Pool log detected':health.api_up?'API is up; waiting for pool log':(errors.stats||errors.health||'Waiting for monitoring API'));
   const rate1=pool.hashrate1m||stats.hashrate;text('hashrate',rate1||'0 H/s');text('hashrateFoot','5m average: '+(pool.hashrate5m||'—')+' · 1h: '+(pool.hashrate1hr||'—'));
   text('workers',stats.workers===undefined?'—':fmtNum(stats.workers));text('users',stats.users===undefined?'—':fmtNum(stats.users));
-  const trackerReady=summary.tracker_ready===true;const sample=summary.sampled??0;text('accepted',trackerReady?fmtNum(summary.accepted):'—');text('rejected',trackerReady?fmtNum(summary.rejected):'—');const started=num(summary.tracking_started_at);const foot=!trackerReady?'Starting share counter…':started===null?'Tracking new share records':'Tracked since '+new Date(started*1000).toLocaleDateString();text('acceptedFoot',foot);text('rejectedFoot',foot);
+  const trackerReady=summary.tracker_ready===true;const sample=summary.sampled??0;text('accepted',trackerReady?fmtNum(summary.accepted):'—');text('rejected',trackerReady?fmtNum(summary.rejected):'—');const baseline=num(summary.baseline_records)??0;const foot=!trackerReady?'Starting share counter…':'Baseline '+fmtNum(baseline)+' + new records';text('acceptedFoot',foot);text('rejectedFoot',foot);
   text('bestshare',fmtDifficulty(pool.bestshare));text('luck',num(pool.luck)===null?'—':fmtNum(pool.luck)+'%');
   const height=stats.block_height??node.blocks;text('height',height===undefined||height===null?'—':fmtNum(height));text('headers',node.headers===undefined?'—':fmtNum(node.headers));text('chain',node.chain||'—');text('netdiff',fmtDifficulty(node.difficulty));
   const synced=node.synced===true;const nodeKnown=Object.keys(node).length>0;text('chainChip',!nodeKnown?'Node status unavailable':synced?'Synced':node.ibd===true?'Initial sync':'Behind headers');
