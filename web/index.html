@@ -96,8 +96,8 @@ td{padding:9px}
     <article class="card"><div class="metric-row"><span class="card-label">Pool hashrate</span><span class="mini-chip">1 minute</span></div><div id="hashrate" class="big">—</div><div id="hashrateFoot" class="card-foot">5m average: —</div></article>
     <article class="card"><div class="metric-row"><span class="card-label">Active workers</span><span class="mini-chip">Stratum</span></div><div id="workers" class="big">—</div><div class="card-foot">Connected miner workers</div></article>
     <article class="card"><div class="metric-row"><span class="card-label">Mining users</span><span class="mini-chip">Accounts</span></div><div id="users" class="big">—</div><div class="card-foot">Distinct users seen by pool</div></article>
-    <article class="card"><div class="metric-row"><span class="card-label">Accepted shares</span><span class="mini-chip">Pool total</span></div><div id="accepted" class="big">—</div><div id="acceptedFoot" class="card-foot">Latest share records</div></article>
-    <article class="card"><div class="metric-row"><span class="card-label">Rejected shares</span><span class="mini-chip">Pool total</span></div><div id="rejected" class="big">—</div><div id="rejectedFoot" class="card-foot">Latest share records</div></article>
+    <article class="card"><div class="metric-row"><span class="card-label">Accepted shares</span><span class="mini-chip">Tracked count</span></div><div id="accepted" class="big">—</div><div id="acceptedFoot" class="card-foot">Latest share records</div></article>
+    <article class="card"><div class="metric-row"><span class="card-label">Rejected shares</span><span class="mini-chip">Tracked count</span></div><div id="rejected" class="big">—</div><div id="rejectedFoot" class="card-foot">Latest share records</div></article>
     <article class="card"><div class="metric-row"><span class="card-label">Best share</span><span class="mini-chip">Difficulty</span></div><div id="bestshare" class="big">—</div><div class="card-foot">Best submitted share difficulty</div></article>
     <article class="card"><div class="metric-row"><span class="card-label">Pool luck</span><span class="mini-chip">Round</span></div><div id="luck" class="big">—</div><div class="card-foot">Pool round luck from engine logs</div></article>
   </section>
@@ -146,19 +146,13 @@ td{padding:9px}
   </section>
 
   <section class="card" style="margin-top:15px">
-    <div class="tabbar" role="tablist" aria-label="Pool records">
-      <button id="sharesTab" class="tab-button active" type="button" role="tab" aria-selected="true" aria-controls="sharesPanel">Recent Shares</button>
-      <button id="blocksTab" class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="blocksPanel">Block Find</button>
+    <div class="tabbar" role="presentation">
+      <span class="tab-button active" aria-current="page">Recent Shares</span>
     </div>
-    <div id="sharesPanel" role="tabpanel" aria-labelledby="sharesTab">
-      <div class="section-head"><h3>Recent shares</h3><small id="shareCaption">Latest share-log entries</small></div>
+    <div id="sharesPanel">
+      <div class="section-head"><h3>Recent shares</h3><small id="shareCaption">Starting share-history tracker…</small></div>
       <div class="table-wrap"><table><thead><tr><th>Time</th><th>Worker</th><th>Share diff</th><th>Result</th><th>Reason</th></tr></thead><tbody id="shareRows"><tr><td colspan="5" class="empty">Waiting for share data…</td></tr></tbody></table></div>
-      <div class="inline-note">Accepted/rejected cards use pool log counters when available; otherwise they fall back to the recent share-record sample. Miner IP addresses and payout usernames are intentionally not shown.</div>
-    </div>
-    <div id="blocksPanel" role="tabpanel" aria-labelledby="blocksTab" hidden>
-      <div class="section-head"><h3>Block Find History</h3><small id="blockCaption">Recent block-related pool events</small></div>
-      <div class="table-wrap"><table><thead><tr><th>Time</th><th>Status</th><th>Block event details</th></tr></thead><tbody id="blockRows"><tr><td colspan="3" class="empty">Checking pool logs…</td></tr></tbody></table></div>
-      <div class="inline-note">This tab shows block candidates and block-submission events found in available pool logs. A candidate is not a confirmed reward; BCHN must accept the block and the network must validate it.</div>
+      <div class="inline-note">Accepted and rejected cards count individual share records observed since tracking began. Earlier historical totals cannot be reconstructed from the initial API snapshot. Miner IP addresses and payout usernames are intentionally not shown.</div>
     </div>
   </section>
 
@@ -216,34 +210,37 @@ function updateBlockSummary(items){
   text('blockStatus',label);status.className='tag '+(label==='Accepted'?'ok':label==='Rejected'?'bad':'muted');
   text('blockDetails',details||'A block-related event appeared in the pool logs. Confirm the outcome with BCHN before treating it as a reward.');
 }
-function showBlocks(items){updateBlockSummary(items);const root=byId('blockRows');root.replaceChildren();if(!Array.isArray(items)||items.length===0){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=3;cell.className='empty';cell.textContent='No block-find events recorded yet. When the pool finds or submits a block candidate, it will appear here if the engine logs it.';row.append(cell);root.append(row);text('blockCaption','No block events in available logs');return;}for(const event of items){const row=document.createElement('tr');const time=document.createElement('td');time.textContent=event.timestamp||'—';const status=document.createElement('td');const tag=document.createElement('span');tag.className='tag '+(event.result==='Accepted'?'ok':event.result==='Rejected'?'bad':'muted');tag.textContent=event.result||'Event';status.append(tag);const details=document.createElement('td');details.className='block-details';details.textContent=event.details||'Block event';row.append(time,status,details);root.append(row);}text('blockCaption',items.length+' recent block events');}
-function setPoolTab(tab){const blocks=tab==='blocks';byId('sharesPanel').hidden=blocks;byId('blocksPanel').hidden=!blocks;byId('sharesTab').classList.toggle('active',!blocks);byId('blocksTab').classList.toggle('active',blocks);byId('sharesTab').setAttribute('aria-selected',String(!blocks));byId('blocksTab').setAttribute('aria-selected',String(blocks));}
 function applyDashboard(d){const status=d.status||'unavailable',health=d.health||{},stats=d.stats||{},node=stats.node||{},pool=d.pool_metrics||{},summary=d.share_summary||{},errors=d.errors||{};
   const dot=byId('statusDot');dot.className='dot '+(status==='online'?'online':status==='unavailable'?'offline':'');text('statusText',status==='online'?'Pool online':status==='starting'?'Starting':'Monitoring unavailable');
   text('poolStatus',status==='online'?'ONLINE':status==='starting'?'STARTING':'OFFLINE');text('poolStatusChip',status.toUpperCase());text('poolStatusFoot',health.log_exists?'Pool log detected':health.api_up?'API is up; waiting for pool log':(errors.stats||errors.health||'Waiting for monitoring API'));
   const rate1=pool.hashrate1m||stats.hashrate;text('hashrate',rate1||'0 H/s');text('hashrateFoot','5m average: '+(pool.hashrate5m||'—')+' · 1h: '+(pool.hashrate1hr||'—'));
   text('workers',stats.workers===undefined?'—':fmtNum(stats.workers));text('users',stats.users===undefined?'—':fmtNum(stats.users));
-  text('accepted',summary.accepted===null||summary.accepted===undefined?'0':fmtNum(summary.accepted));text('rejected',summary.rejected===null||summary.rejected===undefined?'0':fmtNum(summary.rejected));const sample=summary.sampled??0;const source=summary.scope||'recent-sample';const foot=source==='pool-log'?'Pool counters':'From latest '+sample+' share records';text('acceptedFoot',foot);text('rejectedFoot',foot);
+  const trackerReady=summary.tracker_ready===true;const sample=summary.sampled??0;text('accepted',trackerReady?fmtNum(summary.accepted):'—');text('rejected',trackerReady?fmtNum(summary.rejected):'—');const started=num(summary.tracking_started_at);const foot=!trackerReady?'Starting share counter…':started===null?'Tracking new share records':'Tracked since '+new Date(started*1000).toLocaleDateString();text('acceptedFoot',foot);text('rejectedFoot',foot);
   text('bestshare',fmtDifficulty(pool.bestshare));text('luck',num(pool.luck)===null?'—':fmtNum(pool.luck)+'%');
   const height=stats.block_height??node.blocks;text('height',height===undefined||height===null?'—':fmtNum(height));text('headers',node.headers===undefined?'—':fmtNum(node.headers));text('chain',node.chain||'—');text('netdiff',fmtDifficulty(node.difficulty));
   const synced=node.synced===true;const nodeKnown=Object.keys(node).length>0;text('chainChip',!nodeKnown?'Node status unavailable':synced?'Synced':node.ibd===true?'Initial sync':'Behind headers');
   const progress=num(node.progress_pct);byId('syncProgress').style.width=(progress===null?0:Math.max(0,Math.min(100,progress)))+'%';text('syncNote',!nodeKnown?'Check BCHN RPC connectivity.':synced?'BCHN reports that initial download is complete.':'Sync progress: '+(progress===null?'unknown':fmtNum(progress)+'%')+'. Do not mine on a node that is not synced.');
-  showEvents(d.activity||[]);showShares(d.shares||[]);showBlocks(d.blocks||[]);text('shareCaption','Latest '+sample+' records sampled');
+  showEvents(d.activity||[]);showShares(d.shares||[]);updateBlockSummary(d.blocks||[]);text('shareCaption',shareFeedCaption(sample,summary.last_checked_at,summary.tracker_ready));
   const stamp=num(d.generated_at);text('updated',stamp===null?'Update time unavailable':'Updated '+new Date(stamp*1000).toLocaleTimeString());
 }
 async function refreshDashboard(){if(refreshing)return;refreshing=true;byId('refresh').disabled=true;try{const d=await jsonFetch(dashboardUrl);applyDashboard(d);}catch(e){byId('statusDot').className='dot offline';text('statusText','Dashboard error');text('poolStatus','UNAVAILABLE');text('poolStatusChip','ERROR');text('poolStatusFoot',e.message);}finally{refreshing=false;byId('refresh').disabled=false;}}
-byId('refresh').addEventListener('click',refreshDashboard);byId('sharesTab').addEventListener('click',()=>setPoolTab('shares'));byId('blocksTab').addEventListener('click',()=>setPoolTab('blocks'));
+byId('refresh').addEventListener('click',refreshDashboard);
 form.addEventListener('submit',async e=>{e.preventDefault();setMessage('Saving payout address…');try{const d=await jsonFetch(settingsUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payout_address:input.value.trim()})});setMessage(d.message||'Payout address saved.','success');await refreshDashboard();}catch(err){setMessage(err.message||'Could not save payout address.','error');}});
 loadSettings();refreshDashboard();setInterval(refreshDashboard,15000);
 // Poll the lightweight shares-only endpoint every second while the shares tab is visible.
+function shareFeedCaption(sampled,lastChecked,ready){
+  if(!ready)return 'Starting share-history tracker…';
+  const checked=num(lastChecked);
+  return 'Latest '+sampled+' records · feed checked '+(checked===null?'—':new Date(checked*1000).toLocaleTimeString());
+}
 async function refreshShares(){
-  if(sharesRefreshing||byId('sharesPanel').hidden)return;
+  if(sharesRefreshing)return;
   sharesRefreshing=true;
   try{
     const d=await jsonFetch(sharesUrl);
     showShares(d.shares||[]);
-    text('shareCaption','Latest '+(d.sampled??0)+' records sampled · refreshed '+new Date().toLocaleTimeString());
-  }catch(e){/* keep current rows during transient API errors */}
+    text('shareCaption',shareFeedCaption(d.sampled??0,d.last_checked_at,d.ready===true));
+  }catch(e){/* preserve current rows during transient refresh errors */}
   finally{sharesRefreshing=false;}
 }
 setInterval(refreshShares,1000);
