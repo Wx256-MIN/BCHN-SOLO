@@ -18,6 +18,69 @@ button,input{font:inherit}button{cursor:pointer}.shell{max-width:1180px;margin:a
 .panel{margin-top:15px;border:1px solid #263641;background:#111a21;border-radius:15px;padding:17px}.panel summary{cursor:pointer;font-weight:800;font-size:14px}.panel p{font-size:12px;color:#90a3b2}.form-row{display:flex;gap:10px;align-items:flex-end}.field{flex:1;min-width:0}.field label{display:block;color:#b1c0cb;font-size:12px;font-weight:800;margin-bottom:7px}.field input{width:100%;border:1px solid #3b4b56;background:#0b1116;border-radius:9px;padding:11px 12px;color:#eaf1f7}.message{font-size:12px;min-height:18px;margin-top:10px;color:#92a5b3}.message.error{color:#ff8e8e}.message.success{color:#63e2a2}.miner-config{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}.config-item{flex:1;min-width:220px;border:1px solid #293944;background:#0d141a;border-radius:10px;padding:12px}.config-item span{display:block;color:#8da1b0;font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:800}.config-item code{display:block;color:#f0c65b;font-size:12px;margin-top:5px;overflow-wrap:anywhere}.footer{text-align:center;color:#667d8d;font-size:11px;margin-top:20px}
 @media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.section-grid{grid-template-columns:1fr}}
 @media(max-width:520px){.shell{padding:18px 12px 36px}.topbar{align-items:flex-start;flex-direction:column}.top-actions{width:100%;justify-content:space-between}.intro{align-items:flex-start;flex-direction:column}.updated{text-align:left}.grid{gap:9px}.card{padding:13px}.big{font-size:22px}.chain-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.form-row{align-items:stretch;flex-direction:column}.form-row button{width:100%}}
+
+/* Dashboard refresh: compact metrics, stronger hierarchy, and a dedicated block panel. */
+.shell{max-width:1000px;padding:20px 16px 42px}
+.topbar{margin-bottom:18px}
+.mark{width:44px;height:44px;border-radius:12px}
+.brand h1{font-size:22px}
+.intro{margin:12px 0 14px}
+.intro h2{font-size:17px}
+.grid{gap:10px}
+.card{padding:14px;border-radius:13px;background:linear-gradient(145deg,#0e171e,#0a1117);border-color:#1e303b}
+.big{font-size:24px;margin:8px 0 2px}
+.section-grid{gap:12px;margin-top:12px}
+.section-head{margin-bottom:12px}
+.chain-grid{gap:8px}
+.chain-stat{padding:11px;border-radius:10px}
+.chain-stat strong{font-size:16px}
+.events{max-height:232px}
+.event{padding:9px;border-radius:8px;font-size:10px}
+.tabbar{justify-content:center;align-items:center;padding:0 0 10px;margin-bottom:12px}
+.tab-button{padding:8px 12px}
+.block-found-panel{position:relative;display:flex;align-items:stretch;min-height:118px;margin-top:12px;padding:27px 14px 10px;border:1px solid #a87500;border-radius:14px;overflow:hidden;background:radial-gradient(ellipse at 13% 100%,#3b2a071f 0,transparent 38%),linear-gradient(110deg,#14140f,#0c1116 58%,#0d1419);box-shadow:inset 0 0 24px #f2a90008}
+.block-found-panel:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#f1a9000a,transparent 28%,transparent 78%,#f1a90005)}
+.block-art{position:absolute;left:16px;top:30px;width:78px;height:72px;color:#f1a900;display:grid;place-items:center;opacity:.96;filter:drop-shadow(0 0 10px #f1a90025)}
+.block-art svg{width:100%;height:100%}
+.block-found-body{position:relative;width:100%;min-width:0}
+.block-found-heading{position:absolute;top:-27px;left:50%;transform:translateX(-50%);z-index:1;white-space:nowrap}
+.block-found-heading span{display:inline-block;padding:5px 26px;border:1px solid #f1a900;border-radius:10px;background:#101419;color:#ffb900;font-size:17px;font-weight:900;letter-spacing:.035em;box-shadow:0 0 0 2px #f1a90012,0 0 18px #f1a90010}
+.block-found-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;align-items:center;min-height:55px;padding-top:13px}
+.block-metric{min-width:0;text-align:center}
+.block-metric span{display:block;color:#91a4b3;font-size:9px;font-weight:800;letter-spacing:.055em;text-transform:uppercase;white-space:nowrap}
+.block-metric strong{display:block;margin-top:5px;color:#eff5f8;font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.block-metric .tag{margin-top:3px}
+.block-detail-line{margin:3px 0 0 83px;color:#8da1b0;font-size:10px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#blockDetails:empty{display:none}
+#sharesPanel .section-head{margin-bottom:8px}
+#shareCaption{font-size:10px}
+.table-wrap table{min-width:570px}
+th{padding:8px 9px}
+td{padding:9px}
+.button,.tab-button{transition:background .15s ease,border-color .15s ease,transform .15s ease}
+.button:active,.tab-button:active{transform:translateY(1px)}
+@media(max-width:760px){
+  .block-art{left:8px;width:54px;opacity:.55}
+  .block-found-panel{padding-left:8px;padding-right:8px}
+  .block-found-metrics{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:9px;padding-top:17px}
+  .block-detail-line{margin-left:4px;text-align:center;white-space:normal}
+}
+@media(max-width:520px){
+  .shell{padding:16px 10px 30px}
+  .brand h1{font-size:21px}
+  .grid{gap:8px}
+  .card{padding:11px}
+  .big{font-size:21px}
+  .block-found-heading{position:relative;top:auto;left:auto;transform:none;display:block;text-align:center;margin:-20px 0 2px}
+  .block-found-heading span{font-size:15px;padding:4px 20px}
+  .block-art{display:none}
+  .block-found-metrics{padding-top:7px}
+  .block-metric span{font-size:8px}
+  .block-metric strong{font-size:12px}
+  .section-head{align-items:flex-start}
+  .section-head small{text-align:right}
+}
+
 </style>
 </head>
 <body>
@@ -56,6 +119,32 @@ button,input{font:inherit}button{cursor:pointer}.shell{max-width:1180px;margin:a
     </article>
   </section>
 
+  <section class="block-found-panel" aria-label="Latest block find">
+    <div class="block-art" aria-hidden="true">
+      <svg viewBox="0 0 100 92" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 5 72 18 72 43 50 56 28 43 28 18 50 5Z" stroke="currentColor" stroke-width="1.5" opacity=".8"/>
+        <path d="M50 17 62 24 62 38 50 45 38 38 38 24 50 17Z" fill="#f1a900" fill-opacity=".22" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M28 43 50 56 50 81 28 68 28 43Z" fill="#f1a900" fill-opacity=".25" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M50 56 72 43 72 68 50 81 50 56Z" fill="#f1a900" fill-opacity=".12" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M15 54 28 46 41 54 41 69 28 77 15 69 15 54Z" fill="#f1a900" fill-opacity=".2" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M59 54 72 46 85 54 85 69 72 77 59 69 59 54Z" fill="#f1a900" fill-opacity=".15" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M10 34 12 39 17 41 12 43 10 48 8 43 3 41 8 39 10 34Z M86 14 88 19 93 21 88 23 86 28 84 23 79 21 84 19 86 14Z" fill="currentColor"/>
+      </svg>
+    </div>
+    <div class="block-found-body">
+      <div class="block-found-heading"><span>BLOCK FOUND</span></div>
+      <div class="block-found-metrics">
+        <div class="block-metric"><span>Block height</span><strong id="blockHeight">—</strong></div>
+        <div class="block-metric"><span>Block hash</span><strong id="blockHash">—</strong></div>
+        <div class="block-metric"><span>Reward</span><strong id="blockReward">— BCH</strong></div>
+        <div class="block-metric"><span>Found by</span><strong id="blockFoundBy">—</strong></div>
+        <div class="block-metric"><span>Time</span><strong id="blockTime">—</strong></div>
+        <div class="block-metric"><span>Status</span><strong><span id="blockStatus" class="tag muted">No block yet</span></strong></div>
+      </div>
+      <p id="blockDetails" class="block-detail-line">No block-find events have been recorded in the available pool logs.</p>
+    </div>
+  </section>
+
   <section class="card" style="margin-top:15px">
     <div class="tabbar" role="tablist" aria-label="Pool records">
       <button id="sharesTab" class="tab-button active" type="button" role="tab" aria-selected="true" aria-controls="sharesPanel">Recent Shares</button>
@@ -92,10 +181,11 @@ button,input{font:inherit}button{cursor:pointer}.shell{max-width:1180px;margin:a
 const appBase=(window.location.pathname.replace(/\/+$/,'')||'')+'/';
 const favicon=document.getElementById('appFavicon');
 if(favicon)favicon.href=appBase+'favicon.svg?v=0.2.1';
-const settingsUrl=appBase+'api/settings', dashboardUrl=appBase+'api/dashboard';
+const settingsUrl=appBase+'api/settings', dashboardUrl=appBase+'api/dashboard', sharesUrl=appBase+'api/shares';
 const byId=id=>document.getElementById(id);
 const form=byId('setup'), input=byId('address'), message=byId('message');
 let refreshing=false;
+let sharesRefreshing=false;
 const numberFormat=new Intl.NumberFormat(undefined,{maximumFractionDigits:2});
 function text(id,value){byId(id).textContent=value===null||value===undefined||value===''?'—':String(value);}
 function setMessage(value,kind=''){message.textContent=value;message.className='message '+kind;}
@@ -107,7 +197,26 @@ async function jsonFetch(url,options){const r=await fetch(url,{cache:'no-store',
 async function loadSettings(){try{const d=await jsonFetch(settingsUrl);if(d.payout_address)input.value=d.payout_address;if(d.configured&& !message.textContent)setMessage('A payout address is already saved.');}catch(e){setMessage(e.message,'error');}}
 function showEvents(items){const root=byId('events');root.replaceChildren();if(!Array.isArray(items)||items.length===0){const empty=document.createElement('div');empty.className='empty';empty.textContent='No matching pool events yet.';root.append(empty);return;}for(const line of items){const row=document.createElement('div');row.className='event';const dot=document.createElement('span');dot.className='event-dot';const content=document.createElement('span');content.textContent=line;const low=String(line).toLowerCase();if(low.includes('accepted'))row.classList.add('good');if(low.includes('reject')||low.includes('error')||low.includes('failed'))row.classList.add('bad');else if(low.includes('warning'))row.classList.add('warn');row.append(dot,content);root.append(row);}}
 function showShares(items){const root=byId('shareRows');root.replaceChildren();if(!Array.isArray(items)||items.length===0){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=5;cell.className='empty';cell.textContent='No share records yet. Connect a miner after the pool has been validated.';row.append(cell);root.append(row);return;}for(const share of items){const row=document.createElement('tr');const values=[fmtTime(share.timestamp),share.worker||'default',share.sdiff===null||share.sdiff===undefined?'—':fmtDifficulty(share.sdiff),share.result===true?'Accepted':share.result===false?'Rejected':'Unknown',share.result===false?(share.reject_reason||'Rejected by pool'):share.result===true?'—':'Result unavailable'];values.forEach((value,index)=>{const cell=document.createElement('td');if(index===1){const span=document.createElement('span');span.className='worker';span.textContent=String(value);cell.append(span);}else if(index===3){const tag=document.createElement('span');tag.className='tag '+(share.result===true?'ok':share.result===false?'bad':'muted');tag.textContent=String(value);cell.append(tag);}else cell.textContent=String(value);row.append(cell);});root.append(row);}}
-function showBlocks(items){const root=byId('blockRows');root.replaceChildren();if(!Array.isArray(items)||items.length===0){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=3;cell.className='empty';cell.textContent='No block-find events recorded yet. When the pool finds or submits a block candidate, it will appear here if the engine logs it.';row.append(cell);root.append(row);text('blockCaption','No block events in available logs');return;}for(const event of items){const row=document.createElement('tr');const time=document.createElement('td');time.textContent=event.timestamp||'—';const status=document.createElement('td');const tag=document.createElement('span');tag.className='tag '+(event.result==='Accepted'?'ok':event.result==='Rejected'?'bad':'muted');tag.textContent=event.result||'Event';status.append(tag);const details=document.createElement('td');details.className='block-details';details.textContent=event.details||'Block event';row.append(time,status,details);root.append(row);}text('blockCaption',items.length+' recent block events');}
+function updateBlockSummary(items){
+  const latest=Array.isArray(items)&&items.length?items[0]:null;
+  const status=byId('blockStatus');
+  if(!latest){
+    text('blockHeight','—');text('blockHash','—');text('blockReward','— BCH');text('blockFoundBy','—');text('blockTime','—');
+    text('blockStatus','No block yet');status.className='tag muted';
+    text('blockDetails','No block-find events have been recorded in the available pool logs.');
+    return;
+  }
+  const details=String(latest.details||'');
+  const height=details.match(/\\b(?:block\\s*)?height\\s*[:=# ]\\s*(\\d{1,12})\\b/i);
+  const hash=details.match(/\\b(?:block\\s*)?hash\\s*[:= ]\\s*([a-f0-9]{16,64})\\b/i);
+  const reward=details.match(/\\breward\\s*[:= ]\\s*([0-9]+(?:\\.[0-9]+)?)\\s*(?:BCH)?/i);
+  text('blockHeight',height?height[1]:'—');text('blockHash',hash?hash[1].slice(0,12)+'…':'—');
+  text('blockReward',reward?reward[1]+' BCH':'— BCH');text('blockFoundBy','—');text('blockTime',latest.timestamp||'—');
+  const label=latest.result==='Accepted'?'Accepted':latest.result==='Rejected'?'Rejected':latest.result==='Candidate'?'Candidate':(latest.result||'Submitted');
+  text('blockStatus',label);status.className='tag '+(label==='Accepted'?'ok':label==='Rejected'?'bad':'muted');
+  text('blockDetails',details||'A block-related event appeared in the pool logs. Confirm the outcome with BCHN before treating it as a reward.');
+}
+function showBlocks(items){updateBlockSummary(items);const root=byId('blockRows');root.replaceChildren();if(!Array.isArray(items)||items.length===0){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=3;cell.className='empty';cell.textContent='No block-find events recorded yet. When the pool finds or submits a block candidate, it will appear here if the engine logs it.';row.append(cell);root.append(row);text('blockCaption','No block events in available logs');return;}for(const event of items){const row=document.createElement('tr');const time=document.createElement('td');time.textContent=event.timestamp||'—';const status=document.createElement('td');const tag=document.createElement('span');tag.className='tag '+(event.result==='Accepted'?'ok':event.result==='Rejected'?'bad':'muted');tag.textContent=event.result||'Event';status.append(tag);const details=document.createElement('td');details.className='block-details';details.textContent=event.details||'Block event';row.append(time,status,details);root.append(row);}text('blockCaption',items.length+' recent block events');}
 function setPoolTab(tab){const blocks=tab==='blocks';byId('sharesPanel').hidden=blocks;byId('blocksPanel').hidden=!blocks;byId('sharesTab').classList.toggle('active',!blocks);byId('blocksTab').classList.toggle('active',blocks);byId('sharesTab').setAttribute('aria-selected',String(!blocks));byId('blocksTab').setAttribute('aria-selected',String(blocks));}
 function applyDashboard(d){const status=d.status||'unavailable',health=d.health||{},stats=d.stats||{},node=stats.node||{},pool=d.pool_metrics||{},summary=d.share_summary||{},errors=d.errors||{};
   const dot=byId('statusDot');dot.className='dot '+(status==='online'?'online':status==='unavailable'?'offline':'');text('statusText',status==='online'?'Pool online':status==='starting'?'Starting':'Monitoring unavailable');
@@ -126,10 +235,18 @@ async function refreshDashboard(){if(refreshing)return;refreshing=true;byId('ref
 byId('refresh').addEventListener('click',refreshDashboard);byId('sharesTab').addEventListener('click',()=>setPoolTab('shares'));byId('blocksTab').addEventListener('click',()=>setPoolTab('blocks'));
 form.addEventListener('submit',async e=>{e.preventDefault();setMessage('Saving payout address…');try{const d=await jsonFetch(settingsUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payout_address:input.value.trim()})});setMessage(d.message||'Payout address saved.','success');await refreshDashboard();}catch(err){setMessage(err.message||'Could not save payout address.','error');}});
 loadSettings();refreshDashboard();setInterval(refreshDashboard,15000);
-// Refresh the Recent Shares panel once per second without polling the full
-// dashboard/API every second. Reuse the last dashboard snapshot and redraw only
-// the shares table; the next normal dashboard refresh supplies fresh records.
-setInterval(async()=>{if(byId('sharesPanel').hidden)return;try{const d=await jsonFetch(dashboardUrl);showShares(d.shares||[]);const sample=(d.share_summary||{}).sampled??0;text('shareCaption','Latest '+sample+' records sampled · refreshed '+new Date().toLocaleTimeString());}catch(e){/* preserve current rows during transient refresh errors */}},1000);
+// Poll the lightweight shares-only endpoint every second while the shares tab is visible.
+async function refreshShares(){
+  if(sharesRefreshing||byId('sharesPanel').hidden)return;
+  sharesRefreshing=true;
+  try{
+    const d=await jsonFetch(sharesUrl);
+    showShares(d.shares||[]);
+    text('shareCaption','Latest '+(d.sampled??0)+' records sampled · refreshed '+new Date().toLocaleTimeString());
+  }catch(e){/* keep current rows during transient API errors */}
+  finally{sharesRefreshing=false;}
+}
+setInterval(refreshShares,1000);
 </script>
 </body>
 </html>
