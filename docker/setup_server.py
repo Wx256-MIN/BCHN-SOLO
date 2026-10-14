@@ -101,7 +101,7 @@ def _safe_block_events(lines):
         if not any(marker in low for marker in markers):
             continue
         timestamp = None
-        match = re.search(r"\\[(\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?)\\]", line)
+        match = re.search(r"\[(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?)\]", line)
         if match:
             timestamp = match.group(1)
         if "reject" in low or "failed" in low:
@@ -112,7 +112,7 @@ def _safe_block_events(lines):
             result = "Candidate"
         else:
             result = "Submitted"
-        safe_line = re.sub(r"\\b(?:\\d{1,3}\\.){3}\\d{1,3}(?::\\d+)?\\b", "[redacted-ip]", line)
+        safe_line = re.sub(r"\b(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?\b", "[redacted-ip]", line)
         safe_line = re.sub(r"bitcoincash:[qp][a-z0-9]{30,}", "bitcoincash:…", safe_line)
         events.append({"timestamp": timestamp, "result": result, "details": safe_line[:320]})
         if len(events) >= 50:
