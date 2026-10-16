@@ -81,6 +81,38 @@ td{padding:9px}
   .section-head small{text-align:right}
 }
 
+
+/* LoneStrike-inspired teal visual pass; retain the existing dashboard IDs and API contract. */
+:root{color:#eaf3f5;background:#070d10}
+body{background:radial-gradient(ellipse at 18% 0%,#103034 0,#080e12 44rem)}
+.mark{background:linear-gradient(145deg,#0caaa7,#087d86);color:#ecffff;box-shadow:0 7px 24px #00b9b022}
+.status-pill{border-color:#24464b;background:#0d1b1f}
+.button.primary,.tab-button.active{background:#079da5;border-color:#079da5;color:#f4ffff}
+.button.primary:hover{background:#12b7bc}
+.button{border-color:#29434a;background:#122126}
+.button:hover{background:#1a3036}
+.card,.panel{border-color:#20363c;background:linear-gradient(145deg,#0e191e,#0a1216)}
+.card-label,.chain-stat span{color:#9bb4bc}
+.mini-chip{background:#152b30;color:#a5c3c9}
+.chain-stat,.event,.config-item{background:#091317;border-color:#1c343a}
+.tab-button{border-color:#29434a;background:#0c171b;color:#a7c0c6}
+.progress{background:#20343a}
+.progress>span{background:#17c5b2}
+.block-found-panel{border-color:#087f83;background:radial-gradient(ellipse at 13% 100%,#00b7ad12 0,transparent 38%),linear-gradient(110deg,#0c1b1e,#0a1115 58%,#0d181c);box-shadow:inset 0 0 24px #00b7ad08}
+.block-art{color:#1cc6bb;filter:drop-shadow(0 0 10px #00b7ad25)}
+.block-art svg path{stroke:currentColor}
+.block-art svg path[fill="#f1a900"]{fill:#11a9a7}
+.block-found-heading span{border-color:#0aa6a7;color:#4de0d6;box-shadow:0 0 0 2px #0aa6a712,0 0 18px #0aa6a710}
+.block-metric strong{color:#eaf6f7}
+.tag.ok{color:#6ce7b3;background:#12392e}.tag.bad{color:#ff9c9c;background:#3a2025}
+.strike-card{margin-top:12px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;align-items:center}
+.strike-meter{height:9px;background:#20343a;border-radius:99px;overflow:hidden;margin-top:10px;border:1px solid #29464b}
+.strike-meter span{display:block;height:100%;width:0;background:linear-gradient(90deg,#087f86,#25d7c5);transition:width .35s ease}
+.strike-value{font-size:24px;font-weight:850;letter-spacing:-.035em;margin-top:5px;color:#4de0d6}
+.strike-note{font-size:11px;color:#91aab2;margin-top:8px}
+.protocol-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid #2a4a50;background:#102126;border-radius:999px;padding:6px 10px;color:#b2d4d8;font-size:11px;font-weight:800}
+@media(max-width:520px){.strike-card{grid-template-columns:1fr;gap:12px}.strike-value{font-size:22px}}
+
 </style>
 </head>
 <body>
@@ -100,6 +132,24 @@ td{padding:9px}
     <article class="card"><div class="metric-row"><span class="card-label">Rejected shares</span><span class="mini-chip">Tracked count</span></div><div id="rejected" class="big">—</div><div id="rejectedFoot" class="card-foot">Latest share records</div></article>
     <article class="card"><div class="metric-row"><span class="card-label">Best share</span><span class="mini-chip">Difficulty</span></div><div id="bestshare" class="big">—</div><div class="card-foot">Best submitted share difficulty</div></article>
     <article class="card"><div class="metric-row"><span class="card-label">Pool luck</span><span class="mini-chip">Round</span></div><div id="luck" class="big">—</div><div class="card-foot">Pool round luck from engine logs</div></article>
+  </section>
+
+
+  <section class="card strike-card" aria-label="Closest Strike gauge">
+    <div>
+      <div class="section-head"><h3>Closest Strike</h3><span class="protocol-pill">STRATUM V1 · ACTIVE</span></div>
+      <div class="sub">Best submitted share compared with the current BCH network difficulty target.</div>
+      <div id="strikeValue" class="strike-value">Waiting for share data</div>
+      <div class="strike-meter" role="progressbar" aria-label="Best share progress toward network target" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="strikeMeter"></span></div>
+      <div id="strikeNote" class="strike-note">This is an estimate from available pool and node metrics, not a prediction of when a block will be found.</div>
+    </div>
+    <div>
+      <div class="chain-grid">
+        <div class="chain-stat"><span>Best share difficulty</span><strong id="strikeBest">—</strong></div>
+        <div class="chain-stat"><span>Network difficulty</span><strong id="strikeNetwork">—</strong></div>
+      </div>
+      <div class="inline-note">Pool connection: <strong>Stratum V1</strong> · Port 3333</div>
+    </div>
   </section>
 
   <section class="section-grid">
@@ -217,6 +267,14 @@ function applyDashboard(d){const status=d.status||'unavailable',health=d.health|
   text('workers',stats.workers===undefined?'—':fmtNum(stats.workers));text('users',stats.users===undefined?'—':fmtNum(stats.users));
   const trackerReady=summary.tracker_ready===true;const sample=summary.sampled??0;text('accepted',trackerReady?fmtNum(summary.accepted):'—');text('rejected',trackerReady?fmtNum(summary.rejected):'—');const baseline=num(summary.baseline_records)??0;const foot=!trackerReady?'Starting share counter…':'Baseline '+fmtNum(baseline)+' + new records';text('acceptedFoot',foot);text('rejectedFoot',foot);
   text('bestshare',fmtDifficulty(pool.bestshare));text('luck',num(pool.luck)===null?'—':fmtNum(pool.luck)+'%');
+  const bestDiff=num(pool.bestshare),networkDiff=num(node.difficulty);
+  text('strikeBest',fmtDifficulty(pool.bestshare));text('strikeNetwork',fmtDifficulty(node.difficulty));
+  const strikeRatio=bestDiff!==null&&networkDiff!==null&&bestDiff>0&&networkDiff>0?(bestDiff/networkDiff)*100:null;
+  const strikePercent=strikeRatio===null?0:Math.min(100,strikeRatio);
+  byId('strikeMeter').style.width=strikePercent+'%';
+  byId('strikeMeter').parentElement.setAttribute('aria-valuenow',String(Math.round(strikePercent*100)/100));
+  text('strikeValue',strikeRatio===null?'Waiting for metrics':(strikeRatio>=100?'Network target reached':fmtNum(strikeRatio)+'% of network target'));
+  text('strikeNote',strikeRatio===null?'Need both best-share difficulty and live network difficulty to calculate the gauge.':'Estimated progress based on best share ÷ network difficulty. Mining remains probabilistic; this gauge is not a block prediction.');
   const height=stats.block_height??node.blocks;text('height',height===undefined||height===null?'—':fmtNum(height));text('headers',node.headers===undefined?'—':fmtNum(node.headers));text('chain',node.chain||'—');text('netdiff',fmtDifficulty(node.difficulty));
   const synced=node.synced===true;const nodeKnown=Object.keys(node).length>0;text('chainChip',!nodeKnown?'Node status unavailable':synced?'Synced':node.ibd===true?'Initial sync':'Behind headers');
   const progress=num(node.progress_pct);byId('syncProgress').style.width=(progress===null?0:Math.max(0,Math.min(100,progress)))+'%';text('syncNote',!nodeKnown?'Check BCHN RPC connectivity.':synced?'BCHN reports that initial download is complete.':'Sync progress: '+(progress===null?'unknown':fmtNum(progress)+'%')+'. Do not mine on a node that is not synced.');

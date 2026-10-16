@@ -89,3 +89,12 @@ The mining engine is [CashStratum](https://github.com/cashstratum/cashstratum), 
 - Do not commit `.env`, wallet seeds, private keys, or passwords.
 - Check that the payout address belongs to you before mining.
 - Treat a public Stratum port as an untrusted network service; use LAN/VPN access unless you intentionally harden and expose it.
+
+
+## Dashboard refresh (0.2.13)
+
+The dashboard uses a dark teal visual theme inspired by the reference LoneStrike Cash app, while preserving BCHN-SOLO's existing API contract and Stratum V1 setup. The Closest Strike panel estimates best-share difficulty as a percentage of the live node network difficulty. This is a comparison gauge only, not a prediction of block-finding odds or time.
+
+### Stratum V2 status
+
+Stratum V2 is **not enabled** in this release. A safe SV2 implementation needs a BCH-compatible Template Provider bridge, a maintained SV2 pool implementation, authenticated private RPC access, persistent service data, dedicated ports, and integration tests proving that templates, share validation, and solved-block submission work correctly against BCHN. See [docs/STRATUM-V2-PLAN.md](docs/STRATUM-V2-PLAN.md). The existing V1 pool and port 3333 remain unchanged while that integration is designed and tested separately.
