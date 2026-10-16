@@ -16,6 +16,7 @@ services:
     environment:
       BCHN_ZMQ_ENABLED: ${BCHN_ZMQ_ENABLED:-false}
       BCHN_ZMQ_URL: ${BCHN_ZMQ_URL:-tcp://host.docker.internal:28332}
+      COINBASE_TAG: "${COINBASE_TAG:-Mine By Wx256-BCH SOLO POOL}"
       POOL_FEE_PERCENT: ${POOL_FEE_PERCENT:-0}
     ports:
       - "${STRATUM_PORT:-3333}:3333/tcp"
