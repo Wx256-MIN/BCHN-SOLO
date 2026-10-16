@@ -127,7 +127,7 @@ body{background:radial-gradient(ellipse at 18% 0%,#103034 0,#080e12 44rem)}
 <div class="shell">
   <header class="topbar">
     <div class="brand"><div class="mark">₿</div><div><div class="eyebrow">Bitcoin Cash · Solo Mining</div><h1>BCHN-SOLO</h1></div></div>
-    <div class="top-actions"><div class="status-pill"><span id="statusDot" class="dot"></span><span id="statusText">Connecting…</span></div><button id="refresh" class="button" type="button">↻ Refresh</button></div>
+    <div class="top-actions"><div class="status-pill"><span id="statusDot" class="dot"></span><span id="statusText">Connecting…</span></div><label class="mini-chip" for="refreshRate">Auto refresh</label><select id="refreshRate" class="button" aria-label="Dashboard refresh interval"><option value="5">5 sec</option><option value="15" selected>15 sec</option><option value="30">30 sec</option><option value="60">60 sec</option><option value="0">Off</option></select><button id="exportDashboard" class="button" type="button">Export JSON</button><button id="copyMinerConfig" class="button" type="button">Copy miner config</button><button id="refresh" class="button" type="button">↻ Refresh</button></div>
   </header>
   <div class="intro"><div><h2>Pool overview</h2><div class="sub">Live node, worker, share and pool activity</div></div><div id="updated" class="updated">Waiting for first update</div></div>
 
@@ -172,7 +172,7 @@ body{background:radial-gradient(ellipse at 18% 0%,#103034 0,#080e12 44rem)}
       <div class="progress"><span id="syncProgress"></span></div><div id="syncNote" class="inline-note">Waiting for BCHN health data…</div>
     </article>
     <article class="card">
-      <div class="section-head"><h3>Recent pool events</h3><small>Latest useful log messages</small></div>
+      <div class="section-head"><h3>Recent pool events</h3><small>Latest useful log messages</small></div><input id="eventSearch" aria-label="Filter pool events" placeholder="Filter events…" style="width:100%;margin-bottom:10px;border:1px solid #29434a;background:#091317;border-radius:8px;padding:9px;color:#eaf3f5">
       <div id="events" class="events"><div class="empty">Waiting for pool logs…</div></div>
     </article>
   </section>
@@ -208,7 +208,7 @@ body{background:radial-gradient(ellipse at 18% 0%,#103034 0,#080e12 44rem)}
       <span class="tab-button active" aria-current="page">Recent Shares</span>
     </div>
     <div id="sharesPanel">
-      <div class="section-head"><h3>Recent shares</h3><small id="shareCaption">Starting share-history tracker…</small></div>
+      <div class="section-head"><h3>Recent shares</h3><small id="shareCaption">Starting share-history tracker…</small></div><div class="form-row" style="margin-bottom:10px"><div class="field"><label for="shareSearch">Filter worker</label><input id="shareSearch" placeholder="Search worker name…"></div><div class="field"><label for="shareResultFilter">Share result</label><select id="shareResultFilter" class="button" style="width:100%"><option value="all">All results</option><option value="accepted">Accepted</option><option value="rejected">Rejected</option><option value="unknown">Unknown</option></select></div></div>
       <div class="table-wrap"><table><thead><tr><th>Time</th><th>Worker</th><th>Share diff</th><th>Result</th><th>Reason</th></tr></thead><tbody id="shareRows"><tr><td colspan="5" class="empty">Waiting for share data…</td></tr></tbody></table></div>
       <div class="inline-note">Accepted and rejected cards count individual records from the initial API sample (up to 1,000) plus new records tracked afterward. The API sample does not provide complete lifetime totals, so older history may be missing. Miner IP addresses and payout usernames are intentionally not shown.</div>
 
@@ -263,6 +263,10 @@ const byId=id=>document.getElementById(id);
 const form=byId('setup'), input=byId('address'), message=byId('message');
 let refreshing=false;
 let sharesRefreshing=false;
+let refreshTimer=null;
+let latestDashboard=null;
+let latestShares=[];
+let latestEvents=[];
 const numberFormat=new Intl.NumberFormat(undefined,{maximumFractionDigits:2});
 function text(id,value){byId(id).textContent=value===null||value===undefined||value===''?'—':String(value);}
 function setMessage(value,kind=''){message.textContent=value;message.className='message '+kind;}
@@ -272,8 +276,8 @@ function fmtDifficulty(value){const n=num(value);if(n===null)return '—';if(n>=
 function fmtTime(value){const n=num(value);return n===null?'—':new Date(n*1000).toLocaleTimeString();}
 async function jsonFetch(url,options){const r=await fetch(url,{cache:'no-store',...options});const type=(r.headers.get('content-type')||'').toLowerCase();if(!type.includes('application/json'))throw new Error('Server returned HTTP '+r.status+' instead of JSON. Update BCHN-SOLO and restart the app.');const d=await r.json();if(!r.ok)throw new Error(d.error||'Request failed (HTTP '+r.status+')');return d;}
 async function loadSettings(){try{const d=await jsonFetch(settingsUrl);if(d.payout_address)input.value=d.payout_address;if(d.configured&& !message.textContent)setMessage('A payout address is already saved.');}catch(e){setMessage(e.message,'error');}}
-function showEvents(items){const root=byId('events');root.replaceChildren();if(!Array.isArray(items)||items.length===0){const empty=document.createElement('div');empty.className='empty';empty.textContent='No matching pool events yet.';root.append(empty);return;}for(const line of items){const row=document.createElement('div');row.className='event';const dot=document.createElement('span');dot.className='event-dot';const content=document.createElement('span');content.textContent=line;const low=String(line).toLowerCase();if(low.includes('accepted'))row.classList.add('good');if(low.includes('reject')||low.includes('error')||low.includes('failed'))row.classList.add('bad');else if(low.includes('warning'))row.classList.add('warn');row.append(dot,content);root.append(row);}}
-function showShares(items,emptyMessage='No share records yet.'){const root=byId('shareRows');root.replaceChildren();updateWorkerShareSummary(items);if(!Array.isArray(items)||items.length===0){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=5;cell.className='empty';cell.textContent=emptyMessage;row.append(cell);root.append(row);return;}for(const share of items){const row=document.createElement('tr');const values=[fmtTime(share.timestamp),share.worker||'default',share.sdiff===null||share.sdiff===undefined?'—':fmtDifficulty(share.sdiff),share.result===true?'Accepted':share.result===false?'Rejected':'Unknown',share.result===false?(share.reject_reason||'Rejected by pool'):share.result===true?'—':'Result unavailable'];values.forEach((value,index)=>{const cell=document.createElement('td');if(index===1){const span=document.createElement('span');span.className='worker';span.textContent=String(value);cell.append(span);}else if(index===3){const tag=document.createElement('span');tag.className='tag '+(share.result===true?'ok':share.result===false?'bad':'muted');tag.textContent=String(value);cell.append(tag);}else cell.textContent=String(value);row.append(cell);});root.append(row);}}
+function showEvents(items){latestEvents=Array.isArray(items)?items:[];const query=(byId('eventSearch')?.value||'').trim().toLowerCase();items=latestEvents.filter(line=>String(line).toLowerCase().includes(query));const root=byId('events');root.replaceChildren();if(!Array.isArray(items)||items.length===0){const empty=document.createElement('div');empty.className='empty';empty.textContent='No matching pool events yet.';root.append(empty);return;}for(const line of items){const row=document.createElement('div');row.className='event';const dot=document.createElement('span');dot.className='event-dot';const content=document.createElement('span');content.textContent=line;const low=String(line).toLowerCase();if(low.includes('accepted'))row.classList.add('good');if(low.includes('reject')||low.includes('error')||low.includes('failed'))row.classList.add('bad');else if(low.includes('warning'))row.classList.add('warn');row.append(dot,content);root.append(row);}}
+function showShares(items,emptyMessage='No share records yet.'){latestShares=Array.isArray(items)?items:[];updateWorkerShareSummary(latestShares);const workerQuery=(byId('shareSearch')?.value||'').trim().toLowerCase(),resultFilter=byId('shareResultFilter')?.value||'all';items=latestShares.filter(s=>String(s.worker||'default').toLowerCase().includes(workerQuery)&&(resultFilter==='all'||(resultFilter==='accepted'&&s.result===true)||(resultFilter==='rejected'&&s.result===false)||(resultFilter==='unknown'&&s.result!==true&&s.result!==false)));const root=byId('shareRows');root.replaceChildren();if(!Array.isArray(items)||items.length===0){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=5;cell.className='empty';cell.textContent=emptyMessage;row.append(cell);root.append(row);return;}for(const share of items){const row=document.createElement('tr');const values=[fmtTime(share.timestamp),share.worker||'default',share.sdiff===null||share.sdiff===undefined?'—':fmtDifficulty(share.sdiff),share.result===true?'Accepted':share.result===false?'Rejected':'Unknown',share.result===false?(share.reject_reason||'Rejected by pool'):share.result===true?'—':'Result unavailable'];values.forEach((value,index)=>{const cell=document.createElement('td');if(index===1){const span=document.createElement('span');span.className='worker';span.textContent=String(value);cell.append(span);}else if(index===3){const tag=document.createElement('span');tag.className='tag '+(share.result===true?'ok':share.result===false?'bad':'muted');tag.textContent=String(value);cell.append(tag);}else cell.textContent=String(value);row.append(cell);});root.append(row);}}
 
 function updateWorkerShareSummary(items){
   const root=byId('workerShareRows');root.replaceChildren();
@@ -313,7 +317,7 @@ function updateBlockSummary(items){
   text('blockStatus',label);status.className='tag '+(label==='Accepted'?'ok':label==='Rejected'?'bad':'muted');
   text('blockDetails',details||'A block-related event appeared in the pool logs. Confirm the outcome with BCHN before treating it as a reward.');
 }
-function applyDashboard(d){const status=d.status||'unavailable',health=d.health||{},stats=d.stats||{},node=stats.node||{},pool=d.pool_metrics||{},summary=d.share_summary||{},errors=d.errors||{};
+function applyDashboard(d){latestDashboard=d;const status=d.status||'unavailable',health=d.health||{},stats=d.stats||{},node=stats.node||{},pool=d.pool_metrics||{},summary=d.share_summary||{},errors=d.errors||{};
   const dot=byId('statusDot');dot.className='dot '+(status==='online'?'online':status==='unavailable'?'offline':'');text('statusText',status==='online'?'Pool online':status==='starting'?'Starting':'Monitoring unavailable');
   text('poolStatus',status==='online'?'ONLINE':status==='starting'?'STARTING':'OFFLINE');text('poolStatusChip',status.toUpperCase());text('poolStatusFoot',health.log_exists?'Pool log detected':health.api_up?'API is up; waiting for pool log':(errors.stats||errors.health||'Waiting for monitoring API'));
   const rate1=pool.hashrate1m||stats.hashrate;text('hashrate',rate1||'0 H/s');text('hashrateFoot','5m average: '+(pool.hashrate5m||'—')+' · 1h: '+(pool.hashrate1hr||'—'));
@@ -336,8 +340,15 @@ function applyDashboard(d){const status=d.status||'unavailable',health=d.health|
 }
 async function refreshDashboard(){if(refreshing)return;refreshing=true;byId('refresh').disabled=true;try{const d=await jsonFetch(dashboardUrl);applyDashboard(d);}catch(e){byId('statusDot').className='dot offline';text('statusText','Dashboard error');text('poolStatus','UNAVAILABLE');text('poolStatusChip','ERROR');text('poolStatusFoot',e.message);}finally{refreshing=false;byId('refresh').disabled=false;}}
 byId('refresh').addEventListener('click',refreshDashboard);
+function scheduleRefresh(){if(refreshTimer)clearInterval(refreshTimer);const seconds=Number(byId('refreshRate').value);if(seconds>0)refreshTimer=setInterval(refreshDashboard,seconds*1000);}
+byId('refreshRate').addEventListener('change',scheduleRefresh);
+byId('eventSearch').addEventListener('input',()=>showEvents(latestEvents));
+byId('shareSearch').addEventListener('input',()=>showShares(latestShares));
+byId('shareResultFilter').addEventListener('change',()=>showShares(latestShares));
+byId('exportDashboard').addEventListener('click',()=>{const payload={exported_at:new Date().toISOString(),dashboard:latestDashboard,shares:latestShares};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='bchn-solo-dashboard-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);});
+byId('copyMinerConfig').addEventListener('click',async()=>{const address=input.value.trim();const username=address?address+'.workername':'bitcoincash:q...YOUR_ADDRESS.workername';const config='Pool URL: stratum+tcp://YOUR_UMBREL_LAN_IP:3333\\nUsername: '+username+'\\nPassword: x';try{await navigator.clipboard.writeText(config);byId('copyMinerConfig').textContent='Copied!';setTimeout(()=>byId('copyMinerConfig').textContent='Copy miner config',1800);}catch(e){window.prompt('Copy miner configuration',config);}});
 form.addEventListener('submit',async e=>{e.preventDefault();setMessage('Saving payout address…');try{const d=await jsonFetch(settingsUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payout_address:input.value.trim()})});setMessage(d.message||'Payout address saved.','success');await refreshDashboard();}catch(err){setMessage(err.message||'Could not save payout address.','error');}});
-loadSettings();refreshDashboard();setInterval(refreshDashboard,15000);
+loadSettings();refreshDashboard();scheduleRefresh();
 
 const electricityForm=byId('electricityForm');
 function calculateElectricity(){
@@ -378,7 +389,7 @@ async function refreshShares(){
   }catch(e){/* preserve current rows during transient refresh errors */}
   finally{sharesRefreshing=false;}
 }
-setInterval(refreshShares,1000);
+setInterval(refreshShares,5000);
 </script>
 </body>
 </html>
