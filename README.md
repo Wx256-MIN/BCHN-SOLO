@@ -89,3 +89,10 @@ The mining engine is [CashStratum](https://github.com/cashstratum/cashstratum), 
 - Do not commit `.env`, wallet seeds, private keys, or passwords.
 - Check that the payout address belongs to you before mining.
 - Treat a public Stratum port as an untrusted network service; use LAN/VPN access unless you intentionally harden and expose it.
+
+
+## Feature parity additions (0.2.15)
+
+- **Electricity cost calculator:** saves tariff per kWh and total rig watts separately from payout settings in persistent app data. Shows daily and 30-day kWh/cost estimates; it does not estimate mining revenue or profitability.
+- **Worker share quality:** groups the currently retained recent share records by worker and shows accepted/rejected counts plus rejection percentage. This is a bounded recent sample, not lifetime worker totals.
+- Existing BCHN node health, pool stats, Closest Strike comparison, block events, recent shares, and Stratum V1 connection settings remain in place. Stratum V2 is not part of this project.

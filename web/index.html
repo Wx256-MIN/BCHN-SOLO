@@ -65,6 +65,14 @@ td{padding:9px}
   .block-found-metrics{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:9px;padding-top:17px}
   .block-detail-line{margin-left:4px;text-align:center;white-space:normal}
 }
+
+.electricity-fields{align-items:flex-end}
+.electricity-results{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:14px}
+.electricity-results .card{padding:12px}
+.electricity-results .big{font-size:20px}
+#electricityPanel>summary{font-weight:850;font-size:14px}
+@media(max-width:760px){.electricity-results{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 @media(max-width:520px){
   .shell{padding:16px 10px 30px}
   .brand h1{font-size:21px}
@@ -203,7 +211,31 @@ body{background:radial-gradient(ellipse at 18% 0%,#103034 0,#080e12 44rem)}
       <div class="section-head"><h3>Recent shares</h3><small id="shareCaption">Starting share-history tracker…</small></div>
       <div class="table-wrap"><table><thead><tr><th>Time</th><th>Worker</th><th>Share diff</th><th>Result</th><th>Reason</th></tr></thead><tbody id="shareRows"><tr><td colspan="5" class="empty">Waiting for share data…</td></tr></tbody></table></div>
       <div class="inline-note">Accepted and rejected cards count individual records from the initial API sample (up to 1,000) plus new records tracked afterward. The API sample does not provide complete lifetime totals, so older history may be missing. Miner IP addresses and payout usernames are intentionally not shown.</div>
+
+      <div class="section-head" style="margin-top:18px"><h3>Worker share quality</h3><small>Recent tracked sample only</small></div>
+      <div class="table-wrap"><table><thead><tr><th>Worker</th><th>Accepted</th><th>Rejected</th><th>Reject rate</th></tr></thead><tbody id="workerShareRows"><tr><td colspan="4" class="empty">Waiting for share data…</td></tr></tbody></table></div>
+      <div class="inline-note">Per-worker counts summarize the currently retained recent records, not lifetime totals. Unknown share results are excluded from the rejection-rate denominator.</div>
     </div>
+  </section>
+
+
+  <section class="panel" id="electricityPanel">
+    <summary>Electricity cost calculator</summary>
+    <p>Estimate miner electricity use from your rig's measured wall power. This is a local estimate only; it does not calculate mining revenue or profitability.</p>
+    <form id="electricityForm">
+      <div class="form-row electricity-fields">
+        <div class="field"><label for="electricityRate">Electricity price per kWh</label><input id="electricityRate" name="rate" type="number" min="0" max="100000" step="any" inputmode="decimal" placeholder="e.g. 5.5" required></div>
+        <div class="field"><label for="electricityWatts">Total rig power (watts)</label><input id="electricityWatts" name="watts" type="number" min="0" max="100000" step="any" inputmode="decimal" placeholder="e.g. 140" required></div>
+        <button class="button primary" type="submit">Save estimate</button>
+      </div>
+    </form>
+    <div class="grid electricity-results">
+      <div class="card"><div class="card-label">Energy per day</div><div class="big" id="energyDaily">—</div><div class="card-foot">kWh / 24 hours</div></div>
+      <div class="card"><div class="card-label">Energy per 30 days</div><div class="big" id="energyMonthly">—</div><div class="card-foot">kWh / 30 days</div></div>
+      <div class="card"><div class="card-label">Cost per day</div><div class="big" id="costDaily">—</div><div class="card-foot">in your entered currency</div></div>
+      <div class="card"><div class="card-label">Cost per 30 days</div><div class="big" id="costMonthly">—</div><div class="card-foot">in your entered currency</div></div>
+    </div>
+    <div id="electricityMessage" class="message" role="status" aria-live="polite">Enter your electricity tariff and measured rig power.</div>
   </section>
 
   <details class="panel" id="setupPanel">
@@ -226,6 +258,7 @@ const appBase=(window.location.pathname.replace(/\/+$/,'')||'')+'/';
 const favicon=document.getElementById('appFavicon');
 if(favicon)favicon.href=appBase+'favicon.svg?v=0.2.1';
 const settingsUrl=appBase+'api/settings', dashboardUrl=appBase+'api/dashboard', sharesUrl=appBase+'api/shares';
+const electricityUrl=appBase+'api/electricity';
 const byId=id=>document.getElementById(id);
 const form=byId('setup'), input=byId('address'), message=byId('message');
 let refreshing=false;
@@ -240,7 +273,27 @@ function fmtTime(value){const n=num(value);return n===null?'—':new Date(n*1000
 async function jsonFetch(url,options){const r=await fetch(url,{cache:'no-store',...options});const type=(r.headers.get('content-type')||'').toLowerCase();if(!type.includes('application/json'))throw new Error('Server returned HTTP '+r.status+' instead of JSON. Update BCHN-SOLO and restart the app.');const d=await r.json();if(!r.ok)throw new Error(d.error||'Request failed (HTTP '+r.status+')');return d;}
 async function loadSettings(){try{const d=await jsonFetch(settingsUrl);if(d.payout_address)input.value=d.payout_address;if(d.configured&& !message.textContent)setMessage('A payout address is already saved.');}catch(e){setMessage(e.message,'error');}}
 function showEvents(items){const root=byId('events');root.replaceChildren();if(!Array.isArray(items)||items.length===0){const empty=document.createElement('div');empty.className='empty';empty.textContent='No matching pool events yet.';root.append(empty);return;}for(const line of items){const row=document.createElement('div');row.className='event';const dot=document.createElement('span');dot.className='event-dot';const content=document.createElement('span');content.textContent=line;const low=String(line).toLowerCase();if(low.includes('accepted'))row.classList.add('good');if(low.includes('reject')||low.includes('error')||low.includes('failed'))row.classList.add('bad');else if(low.includes('warning'))row.classList.add('warn');row.append(dot,content);root.append(row);}}
-function showShares(items,emptyMessage='No share records yet.'){const root=byId('shareRows');root.replaceChildren();if(!Array.isArray(items)||items.length===0){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=5;cell.className='empty';cell.textContent=emptyMessage;row.append(cell);root.append(row);return;}for(const share of items){const row=document.createElement('tr');const values=[fmtTime(share.timestamp),share.worker||'default',share.sdiff===null||share.sdiff===undefined?'—':fmtDifficulty(share.sdiff),share.result===true?'Accepted':share.result===false?'Rejected':'Unknown',share.result===false?(share.reject_reason||'Rejected by pool'):share.result===true?'—':'Result unavailable'];values.forEach((value,index)=>{const cell=document.createElement('td');if(index===1){const span=document.createElement('span');span.className='worker';span.textContent=String(value);cell.append(span);}else if(index===3){const tag=document.createElement('span');tag.className='tag '+(share.result===true?'ok':share.result===false?'bad':'muted');tag.textContent=String(value);cell.append(tag);}else cell.textContent=String(value);row.append(cell);});root.append(row);}}
+function showShares(items,emptyMessage='No share records yet.'){const root=byId('shareRows');root.replaceChildren();updateWorkerShareSummary(items);if(!Array.isArray(items)||items.length===0){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=5;cell.className='empty';cell.textContent=emptyMessage;row.append(cell);root.append(row);return;}for(const share of items){const row=document.createElement('tr');const values=[fmtTime(share.timestamp),share.worker||'default',share.sdiff===null||share.sdiff===undefined?'—':fmtDifficulty(share.sdiff),share.result===true?'Accepted':share.result===false?'Rejected':'Unknown',share.result===false?(share.reject_reason||'Rejected by pool'):share.result===true?'—':'Result unavailable'];values.forEach((value,index)=>{const cell=document.createElement('td');if(index===1){const span=document.createElement('span');span.className='worker';span.textContent=String(value);cell.append(span);}else if(index===3){const tag=document.createElement('span');tag.className='tag '+(share.result===true?'ok':share.result===false?'bad':'muted');tag.textContent=String(value);cell.append(tag);}else cell.textContent=String(value);row.append(cell);});root.append(row);}}
+
+function updateWorkerShareSummary(items){
+  const root=byId('workerShareRows');root.replaceChildren();
+  const workers=new Map();
+  for(const share of (Array.isArray(items)?items:[])){
+    const name=String(share.worker||'default').slice(0,48);
+    if(!workers.has(name))workers.set(name,{accepted:0,rejected:0,known:0});
+    const row=workers.get(name);
+    if(share.result===true){row.accepted++;row.known++;}
+    else if(share.result===false){row.rejected++;row.known++;}
+  }
+  if(!workers.size){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=4;cell.className='empty';cell.textContent='No worker share records available yet.';row.append(cell);root.append(row);return;}
+  for(const [name,counts] of [...workers.entries()].sort((a,b)=>a[0].localeCompare(b[0]))){
+    const tr=document.createElement('tr'),rate=counts.known?100*counts.rejected/counts.known:null;
+    const values=[name,counts.accepted,counts.rejected,rate===null?'—':rate.toFixed(2)+'%'];
+    for(let i=0;i<values.length;i++){const td=document.createElement('td');td.textContent=String(values[i]);if(i===0){const span=document.createElement('span');span.className='worker';span.textContent=String(values[i]);td.replaceChildren(span);}if(i===3&&rate!==null){const tag=document.createElement('span');tag.className='tag '+(rate>1?'bad':'ok');tag.textContent=String(values[i]);td.replaceChildren(tag);}tr.append(td);}
+    root.append(tr);
+  }
+}
+
 function updateBlockSummary(items){
   const latest=Array.isArray(items)&&items.length?items[0]:null;
   const status=byId('blockStatus');
@@ -285,6 +338,30 @@ async function refreshDashboard(){if(refreshing)return;refreshing=true;byId('ref
 byId('refresh').addEventListener('click',refreshDashboard);
 form.addEventListener('submit',async e=>{e.preventDefault();setMessage('Saving payout address…');try{const d=await jsonFetch(settingsUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payout_address:input.value.trim()})});setMessage(d.message||'Payout address saved.','success');await refreshDashboard();}catch(err){setMessage(err.message||'Could not save payout address.','error');}});
 loadSettings();refreshDashboard();setInterval(refreshDashboard,15000);
+
+const electricityForm=byId('electricityForm');
+function calculateElectricity(){
+  const rate=Number(byId('electricityRate').value),watts=Number(byId('electricityWatts').value);
+  if(!Number.isFinite(rate)||!Number.isFinite(watts)||rate<0||watts<0){['energyDaily','energyMonthly','costDaily','costMonthly'].forEach(id=>text(id,'—'));return;}
+  const daily=watts*24/1000,monthly=daily*30;
+  text('energyDaily',daily.toFixed(3));text('energyMonthly',monthly.toFixed(2));
+  text('costDaily',(daily*rate).toFixed(2));text('costMonthly',(monthly*rate).toFixed(2));
+}
+byId('electricityRate').addEventListener('input',calculateElectricity);
+byId('electricityWatts').addEventListener('input',calculateElectricity);
+async function loadElectricity(){
+  try{const d=await jsonFetch(electricityUrl);byId('electricityRate').value=d.rate??'';byId('electricityWatts').value=d.watts??'';calculateElectricity();text('electricityMessage',d.saved?'Saved tariff and power restored from app data.':'Enter your electricity tariff and measured rig power.');}
+  catch(e){text('electricityMessage','Calculator works locally, but saved settings could not be loaded.');}
+}
+electricityForm.addEventListener('submit',async e=>{
+  e.preventDefault();const rate=Number(byId('electricityRate').value),watts=Number(byId('electricityWatts').value);
+  if(!Number.isFinite(rate)||!Number.isFinite(watts)||rate<0||watts<0||rate>100000||watts>100000){text('electricityMessage','Enter valid non-negative values up to 100,000.');return;}
+  calculateElectricity();text('electricityMessage','Saving electricity settings…');
+  try{const d=await jsonFetch(electricityUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rate,watts})});text('electricityMessage',d.message||'Electricity settings saved.');}
+  catch(err){text('electricityMessage',err.message||'Could not save electricity settings.');}
+});
+loadElectricity();
+
 // Poll the lightweight shares-only endpoint every second while the shares tab is visible.
 function shareFeedCaption(sampled,lastChecked,ready,error){
   if(!ready)return error?'Share tracker: '+error:'Starting share-history tracker…';

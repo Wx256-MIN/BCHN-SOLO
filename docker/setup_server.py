@@ -15,6 +15,7 @@ from urllib.parse import urlencode, urlsplit
 
 DATA_DIR = pathlib.Path(os.environ.get("DATA_DIR", "/data"))
 SETTINGS = DATA_DIR / "settings.json"
+ELECTRICITY_SETTINGS = DATA_DIR / "electricity-settings.json"
 SHARE_COUNTERS = DATA_DIR / "share-counters.json"
 API_KEY_FILE = DATA_DIR / "api.key"
 WEB_ROOT = pathlib.Path("/opt/www")
@@ -419,7 +420,7 @@ class Handler(BaseHTTPRequestHandler):
     def route_path(self):
         # Accept paths with or without the Umbrel app URL prefix.
         path = urlsplit(self.path).path.rstrip("/") or "/"
-        for suffix in ("/api/settings", "/api/dashboard", "/api/shares", "/favicon.svg"):
+        for suffix in ("/api/settings", "/api/dashboard", "/api/shares", "/api/electricity", "/favicon.svg"):
             if path.endswith(suffix):
                 return suffix
         if path.endswith("/index.html"):
@@ -449,6 +450,20 @@ class Handler(BaseHTTPRequestHandler):
             except (OSError, ValueError, AttributeError):
                 pass
             self.send_json({"configured": bool(address), "payout_address": address})
+            return
+        if path == "/api/electricity":
+            settings = {"rate": None, "watts": None, "saved": False}
+            try:
+                stored = json.loads(ELECTRICITY_SETTINGS.read_text(encoding="utf-8"))
+                rate, watts = stored.get("rate"), stored.get("watts")
+                if isinstance(rate, (int, float)) and not isinstance(rate, bool) and 0 <= rate <= 100000:
+                    settings["rate"] = rate
+                if isinstance(watts, (int, float)) and not isinstance(watts, bool) and 0 <= watts <= 100000:
+                    settings["watts"] = watts
+                settings["saved"] = settings["rate"] is not None and settings["watts"] is not None
+            except (OSError, ValueError, AttributeError):
+                pass
+            self.send_json(settings)
             return
         if path == "/api/shares":
             payload, error = shares_snapshot()
@@ -492,7 +507,32 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_POST(self):
-        if self.route_path() != "/api/settings":
+        path = self.route_path()
+        if path == "/api/electricity":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                if length < 1 or length > 4096:
+                    raise ValueError("Invalid request size")
+                body = json.loads(self.rfile.read(length).decode("utf-8"))
+                rate, watts = body.get("rate"), body.get("watts")
+                if isinstance(rate, bool) or isinstance(watts, bool):
+                    raise ValueError("Rate and watts must be numbers")
+                rate, watts = float(rate), float(watts)
+                if not (0 <= rate <= 100000 and 0 <= watts <= 100000):
+                    raise ValueError("Rate and watts must be between 0 and 100,000")
+                DATA_DIR.mkdir(parents=True, exist_ok=True)
+                temp = ELECTRICITY_SETTINGS.with_suffix(".tmp")
+                temp.write_text(json.dumps({"rate": rate, "watts": watts}, separators=(",", ":")) + "\n", encoding="utf-8")
+                os.chmod(temp, 0o600)
+                temp.replace(ELECTRICITY_SETTINGS)
+                self.send_json({"ok": True, "message": "Electricity settings saved to persistent app data."})
+            except (ValueError, TypeError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+                self.send_json({"ok": False, "error": str(exc)}, 400)
+            except OSError as exc:
+                print(f"Could not save electricity settings: {exc}", file=sys.stderr)
+                self.send_json({"ok": False, "error": "Cannot save electricity settings. Check app data directory permissions."}, 500)
+            return
+        if path != "/api/settings":
             self.send_error(404)
             return
         try:
