@@ -20,7 +20,8 @@ jobs:
 
       - name: Check Python and dashboard JavaScript syntax
         run: |
-          python3 -m py_compile docker/entrypoint.py docker/api_entrypoint.py docker/setup_server.py
+          python3 -m py_compile docker/cashaddr.py docker/entrypoint.py docker/api_entrypoint.py docker/setup_server.py
+          python3 -m unittest discover -s tests -v
           python3 - <<'PY'
           from pathlib import Path
 
