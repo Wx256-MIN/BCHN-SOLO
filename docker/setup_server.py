@@ -12,6 +12,7 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlencode, urlsplit
+from cashaddr import is_valid_cashaddr
 
 DATA_DIR = pathlib.Path(os.environ.get("DATA_DIR", "/data"))
 SETTINGS = DATA_DIR / "settings.json"
@@ -19,7 +20,6 @@ ELECTRICITY_SETTINGS = DATA_DIR / "electricity-settings.json"
 SHARE_COUNTERS = DATA_DIR / "share-counters.json"
 API_KEY_FILE = DATA_DIR / "api.key"
 WEB_ROOT = pathlib.Path("/opt/www")
-ADDRESS_RE = re.compile(r"^bitcoincash:[qp][a-z0-9]{41,}$")
 POOL_API = "http://api:8888"
 DASHBOARD_CACHE_SECONDS = 12
 _DASH_LOCK = threading.Lock()
@@ -541,8 +541,8 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("Invalid request size")
             body = json.loads(self.rfile.read(length).decode("utf-8"))
             address = str(body.get("payout_address", "")).strip()
-            if not ADDRESS_RE.fullmatch(address):
-                raise ValueError("Enter a mainnet BCH CashAddr beginning with bitcoincash:q or bitcoincash:p.")
+            if not is_valid_cashaddr(address):
+                raise ValueError("Enter a valid mainnet BCH CashAddr, including its correct checksum, beginning with bitcoincash:q or bitcoincash:p.")
             DATA_DIR.mkdir(parents=True, exist_ok=True)
             temp = SETTINGS.with_suffix(".tmp")
             temp.write_text(json.dumps({"payout_address": address}, indent=2) + "\n", encoding="utf-8")
