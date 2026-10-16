@@ -14,7 +14,6 @@ def required(name):
         print(f"Missing required environment variable: {name}", file=sys.stderr)
         raise SystemExit(2)
     return value
-
 data_dir = pathlib.Path(os.environ.get("DATA_DIR", "/data"))
 data_dir.mkdir(parents=True, exist_ok=True)
 config_path = data_dir / "cashstratum.conf"
@@ -54,7 +53,7 @@ config = {
     "bchaddress": payout_address,
     "pooladdress": payout_address,
     "poolfee": pool_fee,
-    "btcsig": os.environ.get("COINBASE_TAG", "BCHN-SOLO"),
+    "btcsig": os.environ.get("COINBASE_TAG", "Mine By Wx256-BCH SOLO POOL"),
     "blockpoll": int(os.environ.get("BLOCK_POLL_MS", "100")),
     "nonce1length": 4,
     "nonce2length": 8,
