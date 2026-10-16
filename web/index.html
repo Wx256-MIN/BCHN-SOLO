@@ -269,6 +269,7 @@ const form=byId('setup'), input=byId('address'), message=byId('message');
 let refreshing=false;
 let sharesRefreshing=false;
 let refreshTimer=null;
+let sharesRefreshTimer=null;
 let latestDashboard=null;
 let latestShares=[];
 let latestEvents=[];
@@ -348,7 +349,7 @@ function applyDashboard(d){latestDashboard=d;const status=d.status||'unavailable
 }
 async function refreshDashboard(){if(refreshing)return;refreshing=true;byId('refresh').disabled=true;try{const d=await jsonFetch(dashboardUrl);applyDashboard(d);}catch(e){byId('statusDot').className='dot offline';text('statusText','Dashboard error');text('poolStatus','UNAVAILABLE');text('poolStatusChip','ERROR');text('poolStatusFoot',e.message);}finally{refreshing=false;byId('refresh').disabled=false;}}
 byId('refresh').addEventListener('click',refreshDashboard);
-function scheduleRefresh(){if(refreshTimer)clearInterval(refreshTimer);const seconds=Number(byId('refreshRate').value);if(seconds>0)refreshTimer=setInterval(refreshDashboard,seconds*1000);}
+function scheduleRefresh(){if(refreshTimer)clearInterval(refreshTimer);if(sharesRefreshTimer)clearInterval(sharesRefreshTimer);refreshTimer=null;sharesRefreshTimer=null;const seconds=Number(byId('refreshRate').value);if(seconds>0){refreshTimer=setInterval(refreshDashboard,seconds*1000);sharesRefreshTimer=setInterval(refreshShares,seconds*1000);}}
 byId('refreshRate').addEventListener('change',scheduleRefresh);
 byId('eventSearch').addEventListener('input',()=>showEvents(latestEvents));
 byId('shareSearch').addEventListener('input',()=>showShares(latestShares));
@@ -397,7 +398,7 @@ async function refreshShares(){
   }catch(e){/* preserve current rows during transient refresh errors */}
   finally{sharesRefreshing=false;}
 }
-setInterval(refreshShares,5000);
+// Share polling uses the dashboard's auto-refresh setting, including Off.
 </script>
 </body>
 </html>
