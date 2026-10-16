@@ -98,8 +98,6 @@ The mining engine is [CashStratum](https://github.com/cashstratum/cashstratum), 
 - Existing BCHN node health, pool stats, Closest Strike comparison, block events, recent shares, and Stratum V1 connection settings remain in place. Stratum V2 is not part of this project.
 
 
-## Dashboard tools (0.2.16)
-
 ### Operator diagnostics (0.2.17)
 
 - **Read-only diagnostic checklist:** summarizes monitoring API availability, pool log presence, BCHN node metrics, sync state, share-tracker readiness and pool-stat availability.
