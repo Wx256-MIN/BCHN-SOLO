@@ -96,3 +96,17 @@ The mining engine is [CashStratum](https://github.com/cashstratum/cashstratum), 
 - **Electricity cost calculator:** saves tariff per kWh and total rig watts separately from payout settings in persistent app data. Shows daily and 30-day kWh/cost estimates; it does not estimate mining revenue or profitability.
 - **Worker share quality:** groups the currently retained recent share records by worker and shows accepted/rejected counts plus rejection percentage. This is a bounded recent sample, not lifetime worker totals.
 - Existing BCHN node health, pool stats, Closest Strike comparison, block events, recent shares, and Stratum V1 connection settings remain in place. Stratum V2 is not part of this project.
+
+
+## Dashboard tools (0.2.16)
+
+- **Configurable auto-refresh:** choose 5, 15, 30, or 60 seconds, or turn automatic refresh off.
+- **Dashboard export:** export the current dashboard snapshot and retained recent shares as JSON for offline troubleshooting. The export contains the same sanitized dashboard fields shown in the UI.
+- **Miner configuration copy:** copy a Stratum V1 connection template; replace the example Umbrel LAN address with your actual host address.
+- **Share filters:** filter recent shares by worker name and accepted/rejected/unknown result without changing the underlying sample.
+- **Event search:** search visible pool log events locally in the browser.
+- **Worker last-seen estimate:** show the most recent timestamp found in the retained share sample per worker. This is not a live connection heartbeat and a connected but idle worker may not appear.
+- **Block event history:** show up to ten recent block-related events parsed from available pool logs. Confirm accepted blocks and rewards with BCHN; log parsing is not independent chain verification.
+- **Pool monitoring API uptime:** display the uptime value reported by the monitoring API process when available.
+
+These are monitoring and operator convenience features. The dashboard intentionally does **not** change pool difficulty, worker timeout, payout rules, or mining-engine settings at runtime: the current app does not expose a validated authenticated control API for those actions, and adding cosmetic controls would be unsafe. Stratum V2 remains excluded.
