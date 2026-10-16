@@ -100,6 +100,14 @@ The mining engine is [CashStratum](https://github.com/cashstratum/cashstratum), 
 
 ## Dashboard tools (0.2.16)
 
+### Operator diagnostics (0.2.17)
+
+- **Read-only diagnostic checklist:** summarizes monitoring API availability, pool log presence, BCHN node metrics, sync state, share-tracker readiness and pool-stat availability.
+- **Copy diagnostic report:** copies a sanitized JSON report for troubleshooting, with check status, guidance and API error summaries. It contains no RPC credentials and does not run repair actions.
+- This is advisory only. Confirm node synchronization and block acceptance directly with BCHN. Runtime difficulty/timeout controls remain excluded until an authenticated, validated control interface and safe rollback behavior exist.
+
+## Dashboard tools (0.2.16)
+
 - **Configurable auto-refresh:** choose 5, 15, 30, or 60 seconds, or turn automatic refresh off.
 - **Dashboard export:** export the current dashboard snapshot and retained recent shares as JSON for offline troubleshooting. The export contains the same sanitized dashboard fields shown in the UI.
 - **Miner configuration copy:** copy a Stratum V1 connection template; replace the example Umbrel LAN address with your actual host address.
