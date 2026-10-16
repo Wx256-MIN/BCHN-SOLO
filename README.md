@@ -98,6 +98,12 @@ The mining engine is [CashStratum](https://github.com/cashstratum/cashstratum), 
 - Existing BCHN node health, pool stats, Closest Strike comparison, block events, recent shares, and Stratum V1 connection settings remain in place. Stratum V2 is not part of this project.
 
 
+### Operator diagnostics (0.2.17)
+
+- **Read-only diagnostic checklist:** summarizes monitoring API availability, pool log presence, BCHN node metrics, sync state, share-tracker readiness and pool-stat availability.
+- **Copy diagnostic report:** copies a sanitized JSON report for troubleshooting, with check status, guidance and API error summaries. It contains no RPC credentials and does not run repair actions.
+- This is advisory only. Confirm node synchronization and block acceptance directly with BCHN. Runtime difficulty/timeout controls remain excluded until an authenticated, validated control interface and safe rollback behavior exist.
+
 ## Dashboard tools (0.2.16)
 
 - **Configurable auto-refresh:** choose 5, 15, 30, or 60 seconds, or turn automatic refresh off.
