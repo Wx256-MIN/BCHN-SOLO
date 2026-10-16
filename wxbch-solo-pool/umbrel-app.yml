@@ -2,7 +2,7 @@ manifestVersion: 1
 id: wxbch-solo-pool
 category: bitcoin
 name: BCHN-SOLO
-version: "0.2.15"
+version: "0.2.16"
 tagline: Self-hosted Bitcoin Cash solo-mining pool
 description: >-
   A private Bitcoin Cash solo-mining pool using a CKPool-derived CashStratum
@@ -20,5 +20,5 @@ repo: https://github.com/Wx256-MIN/BCHN-SOLO
 support: https://github.com/Wx256-MIN/BCHN-SOLO/issues
 port: 8080
 gallery: []
-releaseNotes: "Add persistent electricity cost estimates and recent per-worker share quality; Stratum V1 only."
+releaseNotes: "Add dashboard filters/export, configurable refresh, worker last-seen estimates, block history, uptime display, electricity estimates and per-worker share quality; Stratum V1 only."
 defaultPassword: ""
