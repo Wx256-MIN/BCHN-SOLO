@@ -68,6 +68,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=build /src/src/ckpool /usr/local/bin/ckpool
 COPY --from=api-build /out/cashstratum-api /usr/local/bin/cashstratum-api
+COPY docker/cashaddr.py /usr/local/bin/cashaddr.py
 COPY docker/entrypoint.py /usr/local/bin/bchn-solo-entrypoint
 COPY docker/api_entrypoint.py /usr/local/bin/bchn-solo-api-entrypoint
 COPY docker/setup_server.py /usr/local/bin/bchn-solo-setup-server

@@ -7,6 +7,7 @@ import subprocess
 import shutil
 import sys
 import time
+from cashaddr import is_valid_cashaddr
 
 def required(name):
     value = os.environ.get(name, "").strip()
@@ -31,6 +32,9 @@ if not payout_address:
         payout_address = ""
     if not payout_address:
         raise SystemExit("The saved payout address is empty or invalid; open the pool setup page and save a BCH CashAddr.")
+
+if not is_valid_cashaddr(payout_address):
+    raise SystemExit("Invalid BCH mainnet CashAddr: check the address and its checksum before starting the pool.")
 
 rpc_url = required("BCHN_RPC_URL")
 rpc_user = required("BCHN_RPC_USER")
