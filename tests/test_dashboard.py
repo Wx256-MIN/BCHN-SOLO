@@ -9,12 +9,12 @@ HTML = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
 
 class DashboardRegressionTests(unittest.TestCase):
     def test_html_ids_are_unique(self):
-        ids = re.findall(r'\\bid="([^"]+)"', HTML)
+        ids = re.findall(r'\bid="([^"]+)"', HTML)
         duplicates = sorted({item for item in ids if ids.count(item) > 1})
         self.assertEqual(duplicates, [], f"Duplicate HTML IDs: {duplicates}")
 
     def test_all_fragment_links_have_targets(self):
-        ids = set(re.findall(r'\\bid="([^"]+)"', HTML))
+        ids = set(re.findall(r'\bid="([^"]+)"', HTML))
         targets = re.findall(r'href="#([^"]+)"', HTML)
         missing = sorted(set(targets) - ids)
         self.assertEqual(missing, [], f"Broken fragment links: {missing}")
