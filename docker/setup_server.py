@@ -181,6 +181,8 @@ def _safe_block_events(lines):
             result = "Candidate"
         else:
             result = "Submitted"
+        hash_match = re.search(r"\b[0-9a-fA-F]{64}\b", line)
+        block_hash = hash_match.group(0).lower() if hash_match else None
         safe_line = re.sub(r"\b(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?\b", "[redacted-ip]", line)
         safe_line = re.sub(r"bitcoincash:[qp][a-z0-9]{30,}", "bitcoincash:…", safe_line)
         events.append({"timestamp": timestamp, "result": result, "details": safe_line[:320], "block_hash": block_hash})
