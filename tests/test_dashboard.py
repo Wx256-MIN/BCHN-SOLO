@@ -54,9 +54,6 @@ class DashboardRegressionTests(unittest.TestCase):
         self.assertIn('re.search(r"Pool:\\s*(\\{.*\\})", line)', source)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
     def test_history_renderer_distinguishes_invalid_samples_from_empty_history(self):
         self.assertIn("valid hashrate samples", HTML)
         self.assertIn("unavailable values are not treated as zero", HTML)
@@ -76,3 +73,7 @@ if __name__ == "__main__":
 
     def test_dashboard_uses_pool_network_difficulty_fallback(self):
         self.assertIn("pool.network_difficulty??pool.networkdifficulty??pool.networkdiff", HTML)
+
+
+if __name__ == "__main__":
+    unittest.main()
