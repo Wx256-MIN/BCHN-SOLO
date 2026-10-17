@@ -255,6 +255,14 @@ body{background:radial-gradient(ellipse at 18% 0%,#103034 0,#080e12 44rem)}
   <section class="panel" id="blockHistoryPanel"><div class="section-head"><h3>Recent block history</h3><small>Parsed from available pool logs</small></div><div class="table-wrap"><table><thead><tr><th>Time</th><th>Result</th><th>Event</th></tr></thead><tbody id="blockHistoryRows"><tr><td colspan="3" class="empty">Waiting for block events…</td></tr></tbody></table></div><div class="inline-note">These are log-derived events, not independent blockchain verification. Confirm accepted blocks and rewards with BCHN.</div></section>
 
   <section class="panel" id="diagnosticsPanel"><div class="section-head"><h3>Operator diagnostics</h3><small>Read-only checks · no pool settings changed</small></div><div id="diagnosticSummary" class="inline-note" role="status">Waiting for dashboard data…</div><div class="table-wrap"><table><thead><tr><th>Check</th><th>Status</th><th>Guidance</th></tr></thead><tbody id="diagnosticRows"><tr><td colspan="3" class="empty">Waiting for monitoring data…</td></tr></tbody></table></div><div class="miner-config"><button id="copyDiagnosticReport" class="button" type="button">Copy diagnostic report</button></div><div class="inline-note">Diagnostics use the monitoring API and node fields already exposed by the app. They do not change difficulty, worker timeout, payouts, RPC credentials, or mining-engine configuration.</div></section>
+  <section class="panel" id="troubleshootingAgentPanel">
+    <div class="section-head"><h3>Troubleshooting agent</h3><small>Evidence-based checks · approval required</small></div>
+    <p>Runs local rule-based diagnostics against the current dashboard snapshot and saves proposed next steps for review. It does not execute commands, change pool settings, disconnect workers, or edit repository files. A cloud/local LLM is not configured in this release.</p>
+    <div class="miner-config"><button id="runTroubleshooter" class="button primary" type="button">Analyze current status</button><button id="refreshProposals" class="button" type="button">Refresh proposals</button></div>
+    <div id="agentMessage" class="message" role="status">Waiting for a diagnostic run.</div>
+    <div class="section-head" style="margin-top:14px"><h3>Proposals & approval history</h3><small>Approval records only; execution disabled</small></div>
+    <div id="agentProposals"><div class="empty">No proposals loaded.</div></div>
+  </section>
   <details class="panel" id="setupPanel">
     <summary>Pool setup & payout address</summary>
     <p>Enter a mainnet BCH CashAddr you control. This address is saved to this Umbrel's persistent app data. For solo mode, the miner's CashAddr in its Stratum username determines its block payout.</p>
@@ -355,6 +363,55 @@ function renderHashrateHistory(d){
   const first=new Date(valid[0].timestamp*1000).toLocaleString(),lastTime=new Date(valid[valid.length-1].timestamp*1000).toLocaleString();
   root.innerHTML='<svg viewBox="0 0 '+width+' '+height+'" width="100%" role="img" aria-label="Hashrate from '+first+' to '+lastTime+'" xmlns="http://www.w3.org/2000/svg"><line x1="'+pad+'" y1="'+(height-pad)+'" x2="'+(width-pad)+'" y2="'+(height-pad)+'" stroke="#344653" stroke-width="1"/><line x1="'+pad+'" y1="'+pad+'" x2="'+(width-pad)+'" y2="'+pad+'" stroke="#263641" stroke-width="1" stroke-dasharray="4 5"/><polyline points="'+points+'" fill="none" stroke="#f1a900" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><text x="'+pad+'" y="13" fill="#8da1b0" font-size="10">'+String(hi)+'</text><text x="'+pad+'" y="'+(height-4)+'" fill="#8da1b0" font-size="10">'+String(lo)+'</text><text x="'+(width-pad)+'" y="'+(height-4)+'" text-anchor="end" fill="#8da1b0" font-size="10">'+valid.length+' samples</text></svg>';
 }
+const agentUrl=appBase+'api/agent/proposals';
+function setAgentMessage(value,kind=''){text('agentMessage',value);byId('agentMessage').className='message '+kind;}
+function renderAgentProposals(rows){
+ const root=byId('agentProposals');root.replaceChildren();
+ if(!Array.isArray(rows)||!rows.length){root.innerHTML='<div class="empty">No proposals yet. Run an analysis to create one.</div>';return;}
+ for(const p of [...rows].reverse()){
+  const card=document.createElement('div');card.className='chain-stat';card.style.marginBottom='9px';
+  const heading=document.createElement('div');heading.className='metric-row';
+  const title=document.createElement('strong');title.textContent=p.title||'Untitled proposal';
+  const status=document.createElement('span');status.className='tag '+(p.status==='approved'?'ok':p.status==='rejected'?'bad':'muted');status.textContent=p.status||'pending';
+  heading.append(title,status);card.append(heading);
+  const detail=document.createElement('p');detail.textContent='Evidence: '+(p.detail||'—');card.append(detail);
+  const proposal=document.createElement('p');proposal.textContent='Suggested next step: '+(p.proposal||'—');card.append(proposal);
+  const meta=document.createElement('div');meta.className='inline-note';meta.textContent='Type: '+(p.kind||'diagnostic')+' · '+(p.created_at?new Date(p.created_at*1000).toLocaleString():'time unknown')+' · Execution disabled';card.append(meta);
+  if(p.status==='pending'){
+   const actions=document.createElement('div');actions.className='miner-config';
+   for(const op of ['approve','reject']){const b=document.createElement('button');b.className='button'+(op==='approve'?' primary':'');b.type='button';b.textContent=op==='approve'?'Approve proposal':'Reject proposal';b.addEventListener('click',()=>reviewAgentProposal(p.id,op));actions.append(b);}
+   card.append(actions);
+  }
+  root.append(card);
+ }
+}
+async function loadAgentProposals(){
+ try{const d=await jsonFetch(agentUrl);renderAgentProposals(d.proposals||[]);}
+ catch(e){setAgentMessage('Could not load proposal history: '+e.message,'error');}
+}
+async function createAgentProposal(p){
+ return jsonFetch(agentUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operation:'create',...p})});
+}
+async function reviewAgentProposal(id,operation){
+ try{const d=await jsonFetch(agentUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operation,id})});renderAgentProposals(d.proposals||[]);setAgentMessage(d.message||'Review recorded. No change was executed.','success');}
+ catch(e){setAgentMessage(e.message,'error');}
+}
+async function analyzeCurrentPool(){
+ if(!latestDashboard){setAgentMessage('Dashboard data is not ready yet. Refresh and try again.','error');return;}
+ const d=latestDashboard,health=d.health||{},stats=d.stats||{},node=stats.node||{},summary=d.share_summary||{},errors=d.errors||{};
+ const proposals=[];
+ if(d.status!=='online'||health.api_up!==true)proposals.push({kind:'diagnostic',title:'Pool monitoring API unavailable',detail:errors.health||'Dashboard status is '+(d.status||'unknown')+'.',proposal:'Check Umbrel container health and the sanitized pool/API logs; do not restart services until the cause is understood.'});
+ if(health.log_exists!==true)proposals.push({kind:'diagnostic',title:'Pool log file not detected',detail:'The monitoring API did not confirm the pool log file.',proposal:'Check pool startup output, log path configuration, and /data volume permissions.'});
+ if(Object.keys(node).length===0)proposals.push({kind:'diagnostic',title:'BCHN node metrics unavailable',detail:errors.stats||'No node metrics were returned.',proposal:'Verify BCHN synchronization, RPC reachability and credentials using the Umbrel app logs. Never expose RPC publicly.'});
+ else if(node.synced!==true)proposals.push({kind:'diagnostic',title:'BCHN synchronization is not confirmed',detail:node.ibd===true?'The node reports initial block download.':'The node does not currently report a synced state.',proposal:'Wait for BCHN to finish synchronization and verify node status before relying on mining results.'});
+ if(summary.tracker_ready!==true)proposals.push({kind:'diagnostic',title:'Share tracking is not ready',detail:summary.tracker_error||'The persistent share tracker is still initializing.',proposal:'Check share API availability and /data write permissions; compare pool and miner logs before changing counters.'});
+ if(!proposals.length)proposals.push({kind:'diagnostic',title:'No critical issue detected by current checks',detail:'The available snapshot reports online monitoring, node metrics, and initialized share tracking. This is not a full end-to-end health proof.',proposal:'Continue observing hashrate, accepted/rejected share records, block events, and BCHN status. Use regtest for protocol-level validation.'});
+ setAgentMessage('Preparing '+proposals.length+' evidence-based proposal(s)…');
+ try{for(const p of proposals)await createAgentProposal(p);await loadAgentProposals();setAgentMessage('Analysis complete. Proposals saved for your review; nothing was changed or executed.','success');}
+ catch(e){setAgentMessage('Could not save all proposals: '+e.message,'error');}
+}
+byId('runTroubleshooter').addEventListener('click',analyzeCurrentPool);
+byId('refreshProposals').addEventListener('click',loadAgentProposals);
 function applyDashboard(d){latestDashboard=d;renderHashrateHistory(d);const status=d.status||'unavailable',health=d.health||{},stats=d.stats||{},node=stats.node||{},pool=d.pool_metrics||{},summary=d.share_summary||{},errors=d.errors||{};
   const dot=byId('statusDot');dot.className='dot '+(status==='online'?'online':status==='unavailable'?'offline':'');text('statusText',status==='online'?'Pool online':status==='starting'?'Starting':'Monitoring unavailable');
   text('poolStatus',status==='online'?'ONLINE':status==='starting'?'STARTING':'OFFLINE');text('poolStatusChip',status.toUpperCase());const uptime=num(health.uptime);text('poolUptime',uptime===null?'—':uptime>=86400?Math.floor(uptime/86400)+'d '+Math.floor((uptime%86400)/3600)+'h':uptime>=3600?Math.floor(uptime/3600)+'h '+Math.floor((uptime%3600)/60)+'m':Math.floor(uptime/60)+'m');text('poolStatusFoot',health.log_exists?'Pool log detected':health.api_up?'API is up; waiting for pool log':(errors.stats||errors.health||'Waiting for monitoring API'));
@@ -386,7 +443,7 @@ byId('shareResultFilter').addEventListener('change',()=>showShares(latestShares)
 byId('exportDashboard').addEventListener('click',()=>{const payload={exported_at:new Date().toISOString(),dashboard:latestDashboard,shares:latestShares};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='bchn-solo-dashboard-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);});
 byId('copyMinerConfig').addEventListener('click',async()=>{const address=input.value.trim();const username=address?address+'.workername':'bitcoincash:q...YOUR_ADDRESS.workername';const config='Pool URL: stratum+tcp://YOUR_UMBREL_LAN_IP:3333\\nUsername: '+username+'\\nPassword: x';try{await navigator.clipboard.writeText(config);byId('copyMinerConfig').textContent='Copied!';setTimeout(()=>byId('copyMinerConfig').textContent='Copy miner config',1800);}catch(e){window.prompt('Copy miner configuration',config);}});
 form.addEventListener('submit',async e=>{e.preventDefault();setMessage('Saving payout address…');try{const d=await jsonFetch(settingsUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payout_address:input.value.trim()})});setMessage(d.message||'Payout address saved.','success');await refreshDashboard();}catch(err){setMessage(err.message||'Could not save payout address.','error');}});
-loadSettings();refreshDashboard();scheduleRefresh();
+loadSettings();refreshDashboard();scheduleRefresh();loadAgentProposals();
 
 const electricityForm=byId('electricityForm');
 function calculateElectricity(){
