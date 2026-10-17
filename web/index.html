@@ -221,6 +221,18 @@ body{background:radial-gradient(ellipse at 18% 0%,#103034 0,#080e12 44rem)}
   </section>
 
 
+  <section class="panel" id="hashrateHistoryPanel">
+    <div class="section-head"><h3>Hashrate & network history</h3><small id="historyCaption">Persistent local history · starts after update</small></div>
+    <div class="chain-grid" style="margin-bottom:12px">
+      <div class="chain-stat"><span>Latest hashrate</span><strong id="historyLatestHashrate">—</strong></div>
+      <div class="chain-stat"><span>Peak in retained history</span><strong id="historyPeakHashrate">—</strong></div>
+      <div class="chain-stat"><span>Latest network difficulty</span><strong id="historyNetworkDifficulty">—</strong></div>
+      <div class="chain-stat"><span>Latest worker count</span><strong id="historyLatestWorkers">—</strong></div>
+    </div>
+    <div id="hashrateChart" role="img" aria-label="Recent hashrate history chart" style="width:100%;min-height:120px;overflow:hidden"><div class="empty">Collecting history samples…</div></div>
+    <div class="inline-note">Samples are saved in Umbrel app data, up to 1,000 records. History begins after this version starts and is not retroactive. Hashrate values follow the pool's own reported units.</div>
+  </section>
+
   <section class="panel" id="electricityPanel">
     <summary>Electricity cost calculator</summary>
     <p>Estimate miner electricity use from your rig's measured wall power. This is a local estimate only; it does not calculate mining revenue or profitability.</p>
@@ -326,7 +338,24 @@ function updateBlockSummary(items){
   text('blockDetails',details||'A block-related event appeared in the pool logs. Confirm the outcome with BCHN before treating it as a reward.');
 }
 function renderDiagnostics(d){const health=d.health||{},stats=d.stats||{},node=stats.node||{},summary=d.share_summary||{},errors=d.errors||{};const checks=[];const add=(name,ok,detail)=>checks.push({name,ok,detail});add('Monitoring API',health.api_up===true,health.api_up?'Authenticated monitoring API responded.':(errors.health||'API unavailable; check container logs and startup.'));add('Pool log',health.log_exists===true,health.log_exists?'Pool log file is present.':'Log file missing; pool may still be starting or logging is misconfigured.');add('BCHN node data',Object.keys(node).length>0,Object.keys(node).length?'Node metrics are available.':(errors.stats||'Node metrics unavailable; check BCHN RPC connectivity and credentials.'));add('Blockchain sync',node.synced===true,node.synced===true?'Node reports synced.':node.ibd===true?'Initial block download is in progress.':'Sync is incomplete or status is unknown; verify BCHN before mining.');add('Share tracker',summary.tracker_ready===true,summary.tracker_ready===true?'Share tracker is initialized; totals are tracked from its baseline.':(summary.tracker_error||'Tracker is initializing; counts may not be ready yet.'));add('Pool statistics',stats.hashrate!==undefined&&stats.hashrate!==null&&stats.workers!==undefined&&stats.workers!==null,'Hashrate: '+(stats.hashrate??'unknown')+'; workers: '+(stats.workers??'unknown')+'.');const root=byId('diagnosticRows');root.replaceChildren();let failed=0;for(const c of checks){if(!c.ok)failed++;const tr=document.createElement('tr');const a=document.createElement('td');a.textContent=c.name;const b=document.createElement('td');const tag=document.createElement('span');tag.className='tag '+(c.ok?'ok':'bad');tag.textContent=c.ok?'OK':'CHECK';b.append(tag);const z=document.createElement('td');z.style.whiteSpace='normal';z.textContent=c.detail;tr.append(a,b,z);root.append(tr);}text('diagnosticSummary',failed===0?'All '+checks.length+' read-only checks look healthy.':' '+failed+' of '+checks.length+' checks need attention. This is guidance, not a guarantee that mining is healthy.');const report={generated_at:new Date().toISOString(),pool_status:d.status||'unknown',checks:checks.map(c=>({check:c.name,status:c.ok?'OK':'CHECK',guidance:c.detail})),api_errors:errors,notes:['Read-only diagnostic report.','Share counts are limited to the tracker baseline and subsequent records.','Block events are log-derived; verify accepted blocks with BCHN.','No settings or mining behavior were changed.']};byId('copyDiagnosticReport').onclick=()=>{const blob=JSON.stringify(report,null,2);if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(blob).then(()=>{text('diagnosticSummary','Diagnostic report copied.');}).catch(()=>{text('diagnosticSummary','Clipboard unavailable; use Export JSON instead.');});}else{text('diagnosticSummary','Clipboard unavailable in this browser.');}};}
-function applyDashboard(d){latestDashboard=d;const status=d.status||'unavailable',health=d.health||{},stats=d.stats||{},node=stats.node||{},pool=d.pool_metrics||{},summary=d.share_summary||{},errors=d.errors||{};
+function renderHashrateHistory(d){
+  const history=(d.history&&Array.isArray(d.history.samples))?d.history.samples:[];
+  const valid=history.filter(p=>num(p.hashrate)!==null&&num(p.timestamp)!==null);
+  const latest=valid.length?valid[valid.length-1]:null;
+  const peak=valid.reduce((best,p)=>!best||num(p.hashrate)>num(best.hashrate)?p:best,null);
+  text('historyLatestHashrate',latest?String(latest.hashrate):'—');
+  text('historyPeakHashrate',peak?String(peak.hashrate):'—');
+  text('historyNetworkDifficulty',latest?fmtDifficulty(latest.network_difficulty):'—');
+  text('historyLatestWorkers',latest?fmtNum(latest.workers):'—');
+  text('historyCaption',(d.history?.sample_count??history.length)+' retained samples · max '+(d.history?.retention_limit??1000));
+  const root=byId('hashrateChart');
+  if(valid.length<2){root.innerHTML='<div class="empty">History is being collected. At least two valid samples are needed to draw the chart.</div>';return;}
+  const width=860,height=150,pad=22,values=valid.map(p=>num(p.hashrate)),lo=Math.min(...values),hi=Math.max(...values),range=(hi-lo)||1;
+  const points=values.map((v,i)=>{const x=pad+i*(width-pad*2)/(values.length-1),y=height-pad-(v-lo)*(height-pad*2)/range;return x.toFixed(1)+','+y.toFixed(1)}).join(' ');
+  const first=new Date(valid[0].timestamp*1000).toLocaleString(),lastTime=new Date(valid[valid.length-1].timestamp*1000).toLocaleString();
+  root.innerHTML='<svg viewBox="0 0 '+width+' '+height+'" width="100%" role="img" aria-label="Hashrate from '+first+' to '+lastTime+'" xmlns="http://www.w3.org/2000/svg"><line x1="'+pad+'" y1="'+(height-pad)+'" x2="'+(width-pad)+'" y2="'+(height-pad)+'" stroke="#344653" stroke-width="1"/><line x1="'+pad+'" y1="'+pad+'" x2="'+(width-pad)+'" y2="'+pad+'" stroke="#263641" stroke-width="1" stroke-dasharray="4 5"/><polyline points="'+points+'" fill="none" stroke="#f1a900" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><text x="'+pad+'" y="13" fill="#8da1b0" font-size="10">'+String(hi)+'</text><text x="'+pad+'" y="'+(height-4)+'" fill="#8da1b0" font-size="10">'+String(lo)+'</text><text x="'+(width-pad)+'" y="'+(height-4)+'" text-anchor="end" fill="#8da1b0" font-size="10">'+valid.length+' samples</text></svg>';
+}
+function applyDashboard(d){latestDashboard=d;renderHashrateHistory(d);const status=d.status||'unavailable',health=d.health||{},stats=d.stats||{},node=stats.node||{},pool=d.pool_metrics||{},summary=d.share_summary||{},errors=d.errors||{};
   const dot=byId('statusDot');dot.className='dot '+(status==='online'?'online':status==='unavailable'?'offline':'');text('statusText',status==='online'?'Pool online':status==='starting'?'Starting':'Monitoring unavailable');
   text('poolStatus',status==='online'?'ONLINE':status==='starting'?'STARTING':'OFFLINE');text('poolStatusChip',status.toUpperCase());const uptime=num(health.uptime);text('poolUptime',uptime===null?'—':uptime>=86400?Math.floor(uptime/86400)+'d '+Math.floor((uptime%86400)/3600)+'h':uptime>=3600?Math.floor(uptime/3600)+'h '+Math.floor((uptime%3600)/60)+'m':Math.floor(uptime/60)+'m');text('poolStatusFoot',health.log_exists?'Pool log detected':health.api_up?'API is up; waiting for pool log':(errors.stats||errors.health||'Waiting for monitoring API'));
   const rate1=pool.hashrate1m??stats.hashrate;text('hashrate',rate1===null||rate1===undefined||rate1===''?'—':rate1);text('hashrateFoot','5m average: '+(pool.hashrate5m??'—')+' · 1h: '+(pool.hashrate1hr??'—'));
