@@ -279,7 +279,8 @@ def _collect_dashboard():
             "tracker_error": share_state["error"],
         },
         "shares": share_state["shares"],
-        "blocks": _safe_block_events(lines),\n        "verified_blocks": _verify_block_events(_safe_block_events(lines)),
+        "blocks": _safe_block_events(lines),
+        "verified_blocks": _verify_block_events(_safe_block_events(lines)),
         "activity": _safe_activity(lines),
         "errors": errors,
     }
