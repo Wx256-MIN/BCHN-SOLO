@@ -2,15 +2,15 @@ manifestVersion: 1
 id: wxbch-solo-pool
 category: bitcoin
 name: BCHN-SOLO
-version: "0.2.18"
+version: "0.2.19"
 tagline: Self-hosted Bitcoin Cash solo-mining pool
 description: >-
   A private Bitcoin Cash solo-mining pool using a CKPool-derived CashStratum
-  engine and your existing Bitcoin Cash Node. Includes a dark teal monitoring
-  dashboard, live pool/node health, hashrate, tracked accepted/rejected shares,
-  recent pool events, block-find summary, Closest Strike estimate, recent-sample
-  per-worker share quality, persistent electricity cost calculator, and
-  dashboard rendering and refresh fixes. Stratum V1 ASIC miners connect on port 3333.
+  engine and your existing Bitcoin Cash Node. Includes live pool/node health,
+  hashrate and network metric history, tracked accepted/rejected shares,
+  recent pool events, block-find summary, per-worker share quality, electricity
+  estimates, and a read-only rules-first troubleshooting proposal queue.
+  Proposed actions require review; execution is disabled. Stratum V1 miners connect on port 3333.
 developer: Wx256-MIN
 icon: https://raw.githubusercontent.com/Wx256-MIN/BCHN-SOLO/main/wxbch-solo-pool/icon.svg
 website: https://github.com/Wx256-MIN/BCHN-SOLO
@@ -20,5 +20,5 @@ repo: https://github.com/Wx256-MIN/BCHN-SOLO
 support: https://github.com/Wx256-MIN/BCHN-SOLO/issues
 port: 8080
 gallery: []
-releaseNotes: "v0.2.18: Fix duplicated block-result labels, show unavailable hashrate correctly, validate null worker statistics, and make share polling follow the dashboard refresh setting including Off. Stratum V1 only."
+releaseNotes: "v0.2.19: Add persistent bounded hashrate/network metric history and a rules-first troubleshooting proposal queue with explicit review records. No pool or worker actions are executed."
 defaultPassword: ""
