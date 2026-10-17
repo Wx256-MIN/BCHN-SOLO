@@ -116,3 +116,12 @@ The mining engine is [CashStratum](https://github.com/cashstratum/cashstratum), 
 - **Pool monitoring API uptime:** display the uptime value reported by the monitoring API process when available.
 
 These are monitoring and operator convenience features. The dashboard intentionally does **not** change pool difficulty, worker timeout, payout rules, or mining-engine settings at runtime: the current app does not expose a validated authenticated control API for those actions, and adding cosmetic controls would be unsafe. Stratum V2 remains excluded.
+
+
+## Metric history and troubleshooting proposals (0.2.19)
+
+- **Persistent metric history:** dashboard snapshots save hashrate (pool-reported 1m/5m/1h where available), worker/user counts, chain height, network difficulty, best share, and accepted/rejected difficulty values. The history is bounded to the latest 1,000 samples in `/data/hashrate-history.json`; it begins after this version starts and is not retroactive. If metrics are unavailable, the history records unavailable values rather than fabricating data.
+- **Hashrate chart and summary:** dashboard displays the retained hashrate trend, latest value, peak in the retained sample, network difficulty, and worker count. Pool hashrate units depend on CashStratum's returned metric format.
+- **Rules-first troubleshooting proposals:** the dashboard can analyze available health, node, and share-tracker status and save evidence-based next steps to `/data/agent-proposals.json`. Operators can approve or reject a proposal; review status is recorded.
+- **Safety boundary:** this release does not use an LLM provider and does not execute proposed commands or fixes. Approving a proposal records approval only; it does not change pool settings, worker connections, repository files, or running services. This prevents a misleading or unauthenticated dashboard control from silently changing a live mining pool.
+- **Not yet included:** independently verified block confirmations/reward tracking via BCHN RPC; operational runtime difficulty/timeout controls; and actual worker management actions. These require additional BCHN/engine integration and a separately authenticated, validated action executor with rollback. Current block history remains log-derived and is not proof of a reward.
