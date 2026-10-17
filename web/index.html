@@ -651,6 +651,30 @@ body.dark-mode .sidebar-status{background:#061c30}
   let savedTab='overview';
   try{savedTab=localStorage.getItem('bchn-solo-dashboard-tab')||'overview';}catch(e){}
   selectTab(savedTab,false);
+
+  // Sidebar links must activate the containing tab before scrolling to hidden content.
+  const sidebarTabByTarget={
+    dashboardTop:'overview',
+    sharesPanel:'shares',
+    hashrateHistoryPanel:'history',
+    blockHistoryPanel:'history',
+    electricityPanel:'tools',
+    diagnosticsPanel:'tools',
+    troubleshootingAgentPanel:'tools',
+    setupPanel:'settings'
+  };
+  document.querySelectorAll('.sidebar-nav a[href^="#"]').forEach(link=>{
+    link.addEventListener('click',event=>{
+      const targetId=link.getAttribute('href').slice(1);
+      const tabName=sidebarTabByTarget[targetId];
+      if(!tabName)return;
+      event.preventDefault();
+      selectTab(tabName,false);
+      const target=document.getElementById(targetId);
+      if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
+    });
+  });
+
   const toggle=document.getElementById('themeToggle');
   function setTheme(dark){
     document.body.classList.toggle('dark-mode',dark);
