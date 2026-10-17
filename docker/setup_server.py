@@ -617,7 +617,7 @@ class Handler(BaseHTTPRequestHandler):
                 return suffix
         if path.endswith("/index.html"):
             return "/index.html"
-        if path == "/" or path.endswith("/wxbch-solo-pool"):
+        if path == "/":
             return "/"
         if re.fullmatch(r"/[A-Za-z0-9_-]+", path):
             return "/"
