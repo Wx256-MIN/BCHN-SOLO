@@ -509,7 +509,7 @@ def _record_history(payload):
         try:
             DATA_DIR.mkdir(parents=True, exist_ok=True)
             temp = HISTORY_FILE.with_suffix(".tmp")
-            temp.write_text(json.dumps(rows, separators=(",", ":")) + "\\n", encoding="utf-8")
+            temp.write_text(json.dumps(rows, separators=(",", ":")) + "\n", encoding="utf-8")
             os.chmod(temp, 0o600)
             temp.replace(HISTORY_FILE)
         except OSError as exc:
@@ -556,7 +556,7 @@ def agent_proposals_snapshot():
 def _save_agent_proposals(rows):
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     temp = AGENT_PROPOSALS.with_suffix(".tmp")
-    temp.write_text(json.dumps(rows[-100:], separators=(",", ":")) + "\\n", encoding="utf-8")
+    temp.write_text(json.dumps(rows[-100:], separators=(",", ":")) + "\n", encoding="utf-8")
     os.chmod(temp, 0o600)
     temp.replace(AGENT_PROPOSALS)
 
