@@ -20,6 +20,8 @@ ELECTRICITY_SETTINGS = DATA_DIR / "electricity-settings.json"
 HISTORY_FILE = DATA_DIR / "hashrate-history.json"
 HISTORY_LOCK = threading.Lock()
 HISTORY_LIMIT = 1000
+AGENT_PROPOSALS = DATA_DIR / "agent-proposals.json"
+AGENT_LOCK = threading.Lock()
 SHARE_COUNTERS = DATA_DIR / "share-counters.json"
 API_KEY_FILE = DATA_DIR / "api.key"
 WEB_ROOT = pathlib.Path("/opt/www")
@@ -475,11 +477,31 @@ def dashboard_snapshot():
         return payload
 
 
+def agent_proposals_snapshot():
+    with AGENT_LOCK:
+        try:
+            rows = json.loads(AGENT_PROPOSALS.read_text(encoding="utf-8"))
+            if not isinstance(rows, list):
+                rows = []
+        except (OSError, ValueError):
+            rows = []
+    return {"proposals": rows[-100:], "execution_enabled": False,
+            "note": "Approval records proposals only. No pool, worker, configuration, or repository action is executed."}
+
+
+def _save_agent_proposals(rows):
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    temp = AGENT_PROPOSALS.with_suffix(".tmp")
+    temp.write_text(json.dumps(rows[-100:], separators=(",", ":")) + "\\n", encoding="utf-8")
+    os.chmod(temp, 0o600)
+    temp.replace(AGENT_PROPOSALS)
+
+
 class Handler(BaseHTTPRequestHandler):
     def route_path(self):
         # Accept paths with or without the Umbrel app URL prefix.
         path = urlsplit(self.path).path.rstrip("/") or "/"
-        for suffix in ("/api/settings", "/api/dashboard", "/api/shares", "/api/electricity", "/api/history", "/favicon.svg"):
+        for suffix in ("/api/settings", "/api/dashboard", "/api/shares", "/api/electricity", "/api/history", "/api/agent/proposals", "/favicon.svg"):
             if path.endswith(suffix):
                 return suffix
         if path.endswith("/index.html"):
@@ -527,6 +549,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/history":
             self.send_json(history_snapshot())
             return
+        if path == "/api/agent/proposals":
+            self.send_json(agent_proposals_snapshot())
+            return
         if path == "/api/shares":
             payload, error = shares_snapshot()
             if payload is None:
@@ -570,6 +595,52 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = self.route_path()
+        if path == "/api/agent/proposals":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                if length < 1 or length > 8192:
+                    raise ValueError("Invalid request size")
+                body = json.loads(self.rfile.read(length).decode("utf-8"))
+                operation = body.get("operation", "create")
+                if operation not in ("create", "approve", "reject"):
+                    raise ValueError("Operation must be create, approve, or reject")
+                with AGENT_LOCK:
+                    try:
+                        rows = json.loads(AGENT_PROPOSALS.read_text(encoding="utf-8"))
+                        if not isinstance(rows, list):
+                            rows = []
+                    except (OSError, ValueError):
+                        rows = []
+                    if operation == "create":
+                        kind = str(body.get("kind", "diagnostic"))[:32]
+                        title = str(body.get("title", "")).strip()[:120]
+                        detail = str(body.get("detail", "")).strip()[:1200]
+                        proposal = str(body.get("proposal", "")).strip()[:2000]
+                        allowed = {"diagnostic", "difficulty_change", "timeout_change", "worker_action", "code_fix", "block_verification"}
+                        if kind not in allowed or not title or not detail or not proposal:
+                            raise ValueError("A valid kind, title, evidence detail, and proposed next step are required")
+                        proposal_id = str(int(time.time())) + "-" + os.urandom(4).hex()
+                        rows.append({"id": proposal_id, "created_at": int(time.time()), "kind": kind,
+                                     "title": title, "detail": detail, "proposal": proposal,
+                                     "status": "pending", "execution": "disabled"})
+                    else:
+                        proposal_id = str(body.get("id", ""))[:80]
+                        found = next((item for item in rows if item.get("id") == proposal_id), None)
+                        if not found:
+                            raise ValueError("Proposal not found")
+                        if found.get("status") != "pending":
+                            raise ValueError("Only pending proposals can be reviewed")
+                        found["status"] = "approved" if operation == "approve" else "rejected"
+                        found["reviewed_at"] = int(time.time())
+                        found["execution"] = "disabled"
+                    _save_agent_proposals(rows)
+                self.send_json({"ok": True, "message": "Proposal recorded. Approval does not execute or apply a change.", **agent_proposals_snapshot()})
+            except (ValueError, TypeError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+                self.send_json({"ok": False, "error": str(exc)}, 400)
+            except OSError as exc:
+                print(f"Could not save agent proposal: {exc}", file=sys.stderr)
+                self.send_json({"ok": False, "error": "Cannot save proposal to app data."}, 500)
+            return
         if path == "/api/electricity":
             try:
                 length = int(self.headers.get("Content-Length", "0"))
