@@ -17,6 +17,9 @@ from cashaddr import is_valid_cashaddr
 DATA_DIR = pathlib.Path(os.environ.get("DATA_DIR", "/data"))
 SETTINGS = DATA_DIR / "settings.json"
 ELECTRICITY_SETTINGS = DATA_DIR / "electricity-settings.json"
+HISTORY_FILE = DATA_DIR / "hashrate-history.json"
+HISTORY_LOCK = threading.Lock()
+HISTORY_LIMIT = 1000
 SHARE_COUNTERS = DATA_DIR / "share-counters.json"
 API_KEY_FILE = DATA_DIR / "api.key"
 WEB_ROOT = pathlib.Path("/opt/www")
@@ -405,12 +408,68 @@ def shares_snapshot():
     }, None
 
 
+def _record_history(payload):
+    """Persist bounded, privacy-safe hashrate and chain metric samples."""
+    stats = payload.get("stats") or {}
+    pool = payload.get("pool_metrics") or {}
+    node = stats.get("node") or {}
+    sample = {
+        "timestamp": int(payload.get("generated_at") or time.time()),
+        "hashrate": pool.get("hashrate1m") or stats.get("hashrate"),
+        "hashrate5m": pool.get("hashrate5m"),
+        "hashrate1hr": pool.get("hashrate1hr"),
+        "workers": stats.get("workers"),
+        "users": stats.get("users"),
+        "block_height": stats.get("block_height") or node.get("blocks"),
+        "network_difficulty": node.get("difficulty"),
+        "best_share": pool.get("bestshare"),
+        "accepted_difficulty": pool.get("accepted_difficulty"),
+        "rejected_difficulty": pool.get("rejected_difficulty"),
+    }
+    with HISTORY_LOCK:
+        rows = []
+        try:
+            loaded = json.loads(HISTORY_FILE.read_text(encoding="utf-8"))
+            if isinstance(loaded, list):
+                rows = [row for row in loaded if isinstance(row, dict) and isinstance(row.get("timestamp"), int)]
+        except (OSError, ValueError):
+            pass
+        # Replace same-second sample to avoid duplicates from concurrent dashboard requests.
+        if rows and rows[-1].get("timestamp") == sample["timestamp"]:
+            rows[-1] = sample
+        else:
+            rows.append(sample)
+        rows = rows[-HISTORY_LIMIT:]
+        try:
+            DATA_DIR.mkdir(parents=True, exist_ok=True)
+            temp = HISTORY_FILE.with_suffix(".tmp")
+            temp.write_text(json.dumps(rows, separators=(",", ":")) + "\\n", encoding="utf-8")
+            os.chmod(temp, 0o600)
+            temp.replace(HISTORY_FILE)
+        except OSError as exc:
+            print(f"Could not persist metric history: {exc}", file=sys.stderr)
+
+
+def history_snapshot():
+    with HISTORY_LOCK:
+        try:
+            rows = json.loads(HISTORY_FILE.read_text(encoding="utf-8"))
+            if not isinstance(rows, list):
+                rows = []
+        except (OSError, ValueError):
+            rows = []
+    return {"samples": rows[-HISTORY_LIMIT:], "sample_count": min(len(rows), HISTORY_LIMIT),
+            "retention_limit": HISTORY_LIMIT, "note": "History starts when this version runs; it is not retroactive."}
+
+
 def dashboard_snapshot():
     now = time.monotonic()
     with _DASH_LOCK:
         if _DASH_CACHE["payload"] is not None and now < _DASH_CACHE["expires"]:
             return _DASH_CACHE["payload"]
         payload = _collect_dashboard()
+        _record_history(payload)
+        payload["history"] = history_snapshot()
         _DASH_CACHE["payload"] = payload
         _DASH_CACHE["expires"] = time.monotonic() + DASHBOARD_CACHE_SECONDS
         return payload
@@ -420,7 +479,7 @@ class Handler(BaseHTTPRequestHandler):
     def route_path(self):
         # Accept paths with or without the Umbrel app URL prefix.
         path = urlsplit(self.path).path.rstrip("/") or "/"
-        for suffix in ("/api/settings", "/api/dashboard", "/api/shares", "/api/electricity", "/favicon.svg"):
+        for suffix in ("/api/settings", "/api/dashboard", "/api/shares", "/api/electricity", "/api/history", "/favicon.svg"):
             if path.endswith(suffix):
                 return suffix
         if path.endswith("/index.html"):
@@ -464,6 +523,9 @@ class Handler(BaseHTTPRequestHandler):
             except (OSError, ValueError, AttributeError):
                 pass
             self.send_json(settings)
+            return
+        if path == "/api/history":
+            self.send_json(history_snapshot())
             return
         if path == "/api/shares":
             payload, error = shares_snapshot()
