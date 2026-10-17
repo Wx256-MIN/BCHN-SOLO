@@ -318,10 +318,10 @@ function writeAddress(a) {
   fs.writeFileSync(ADDR_FILE, a.trim());
 }
 
-const RPC_HOST = process.env.RPC_HOST || 'sslabs-bitcoin-cash-node_bitcoind_1';
+const RPC_HOST = process.env.RPC_HOST || '';
 const RPC_PORT = process.env.RPC_PORT || '8332';
-const RPC_USER = process.env.RPC_USER || 'bchn';
-const RPC_PASS = process.env.RPC_PASS || 'bchn_local_rpc_pw_2f9c';
+const RPC_USER = process.env.RPC_USER || '';
+const RPC_PASS = process.env.RPC_PASS || '';
 
 // ---- helpers -------------------------------------------------------------
 const SUFFIX = { E:1e18, P:1e15, T:1e12, G:1e9, M:1e6, K:1e3 };
