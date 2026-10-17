@@ -34,9 +34,9 @@ for image in "${images[@]}"; do
 done
 
 rpc_url="http://${NODE_IP}:${RPC_PORT}/"
-rpc_response="$(curl --silent --show-error --max-time 5 --user "${APP_BITCOIN_CASH_NODE_RPC_USER}:${APP_BITCOIN_CASH_NODE_RPC_PASS}" \
+rpc_response="$(curl --silent --show-error --max-time 5 --config /dev/fd/3 \
   --header 'content-type: text/plain;' --data-binary '{"jsonrpc":"1.0","id":"solostrike-preflight","method":"getblockchaininfo","params":[]}' \
-  "$rpc_url")" || fail "BCHN JSON-RPC request failed at ${NODE_IP}:${RPC_PORT}"
+  "$rpc_url" 3<<<"user = \"${APP_BITCOIN_CASH_NODE_RPC_USER}:${APP_BITCOIN_CASH_NODE_RPC_PASS}\"")" || fail "BCHN JSON-RPC request failed at ${NODE_IP}:${RPC_PORT}"
 
 printf '%s' "$rpc_response" | python3 -c '
 import json, sys
