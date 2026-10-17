@@ -1,0 +1,80 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: sslabs-solostrike-cash_dashboard_1
+      APP_PORT: 3000
+
+  pool:
+    image: ghcr.io/danhaus93-ops/asicseer-pool:latest
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      RPC_HOST: sslabs-bitcoin-cash-node_bitcoind_1
+      RPC_PORT: "8332"
+      RPC_USER: bchn
+      RPC_PASS: bchn_local_rpc_pw_2f9c
+      # Lowest-latency block notifications via BCHN's ZMQ hashblock publisher.
+      # Requires BCHN to run with: -zmqpubhashblock=tcp://0.0.0.0:28332
+      ZMQ_ENDPOINT: tcp://sslabs-bitcoin-cash-node_bitcoind_1:28332
+      # Optional seed only — you can set the address in the dashboard UI instead.
+      BCH_ADDRESS: ""
+    volumes:
+      - ${APP_DATA_DIR}/data/pool:/pool
+    ports:
+      - "3335:3333"   # host 3335 (LoneStrike already owns 3333/3334/4333)
+
+  dashboard:
+    image: ghcr.io/danhaus93-ops/solostrike-cash-dashboard:latest
+    restart: on-failure
+    environment:
+      POOL_LOGDIR: /pool/logs
+      STRATUM_HOST: ${DEVICE_DOMAIN_NAME:-umbrel.local}
+      STRATUM_PORT: "3335"
+      RPC_HOST: sslabs-bitcoin-cash-node_bitcoind_1
+      RPC_PORT: "8332"
+      RPC_USER: bchn
+      RPC_PASS: bchn_local_rpc_pw_2f9c
+      APP_VERSION: v1.4.73
+    volumes:
+      - ${APP_DATA_DIR}/data/pool:/pool
+      - ${APP_DATA_DIR}/data/sv2:/sv2
+    depends_on:
+      - pool
+
+  sv2-bridge:
+    image: ghcr.io/danhaus93-ops/bchn-sv2-bridge:latest
+    restart: on-failure
+    environment:
+      BCHN_RPC_URL: http://sslabs-bitcoin-cash-node_bitcoind_1:8332
+      BCHN_RPC_USER: bchn
+      BCHN_RPC_PASS: bchn_local_rpc_pw_2f9c
+      TP_PORT: "8443"
+      SV2_DATA: /data
+      ZMQ_ADDR: tcp://sslabs-bitcoin-cash-node_bitcoind_1:28332
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ${APP_DATA_DIR}/data/sv2:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  sv2-pool:
+    image: ghcr.io/danhaus93-ops/lonestrike-sv2-pool:latest
+    restart: on-failure
+    environment:
+      # Optional override; normally set via the dashboard's Stratum V2 card.
+      PAYOUT_ADDRESS: ""
+      BRIDGE_ADDR: sv2-bridge:8443
+    volumes:
+      - ${APP_DATA_DIR}/data/sv2:/data
+    ports:
+      - "33333:33333"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      - sv2-bridge
