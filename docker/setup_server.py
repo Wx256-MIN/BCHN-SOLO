@@ -114,7 +114,7 @@ def bchn_rpc_call(method, params=None):
         "Authorization": "Basic " + token, "Content-Type": "application/json",
         "Accept": "application/json"}, method="POST")
     try:
-        with urllib.request.urlopen(req, timeout=3) as response:
+        with urllib.request.urlopen(req, timeout=1.5) as response:
             result = json.loads(response.read(2_000_000).decode("utf-8"))
         if not isinstance(result, dict) or result.get("error"):
             return None, "BCHN RPC returned an error"
@@ -127,7 +127,7 @@ def _verify_block_events(events):
     """Cross-check log-derived block hashes against BCHN and calculate coinbase outputs."""
     verified = []
     seen = set()
-    for event in events[:3]:
+    for event in events[:2]:
         block_hash = event.get("block_hash")
         if not isinstance(block_hash, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", block_hash) or block_hash in seen:
             continue
