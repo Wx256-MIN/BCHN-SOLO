@@ -77,7 +77,7 @@ class DashboardRegressionTests(unittest.TestCase):
     def test_worker_summary_includes_recent_count_and_best_share(self):
         self.assertIn("Recent shares", HTML)
         self.assertIn("Best share diff", HTML)
-        self.assertIn("bestShare: null", HTML)
+        self.assertIn("bestShare:null", HTML)
         self.assertIn("counts.bestShare", HTML)
 
     def test_diagnostics_reports_history_metric_quality(self):
