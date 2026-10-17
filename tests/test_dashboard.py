@@ -48,3 +48,10 @@ class DashboardRegressionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_dashboard_numeric_parser_keeps_missing_values_missing(self):
+        self.assertIn("if(value===null||value===undefined||value==='')return null;", HTML)
+
+    def test_pool_log_parser_accepts_space_after_colon(self):
+        source = (ROOT / "docker" / "setup_server.py").read_text(encoding="utf-8")
+        self.assertIn('re.search(r"Pool:\\s*(\\{.*\\})", line)', source)
