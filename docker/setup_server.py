@@ -514,13 +514,13 @@ def _first_numeric_metric(*values):
 
 def _record_history(payload):
     """Persist bounded, privacy-safe hashrate and chain metric samples."""
-    stats = payload.get("stats") or {}
-    pool = payload.get("pool_metrics") or {}
-    node = stats.get("node") or {}
+    stats = payload.get("stats")
+    pool = payload.get("pool_metrics")
     if not isinstance(stats, dict):
         stats = {}
     if not isinstance(pool, dict):
         pool = {}
+    node = stats.get("node")
     if not isinstance(node, dict):
         node = {}
     sample = {
