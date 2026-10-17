@@ -59,7 +59,7 @@ def fetch_pool_api(path):
 def _pool_log_metrics(lines):
     metrics = {}
     for line in reversed(lines):
-        match = re.search(r"Pool:(\{.*\})", line)
+        match = re.search(r"Pool:\s*(\{.*\})", line)
         if not match:
             continue
         try:
