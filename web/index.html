@@ -258,7 +258,7 @@ body{background:radial-gradient(ellipse at 18% 0%,#103034 0,#080e12 44rem)}
   <section class="panel" id="troubleshootingAgentPanel">
     <div class="section-head"><h3>Troubleshooting agent</h3><small>Evidence-based checks · approval required</small></div>
     <p>Runs local rule-based diagnostics against the current dashboard snapshot and saves proposed next steps for review. It does not execute commands, change pool settings, disconnect workers, or edit repository files. A cloud/local LLM is not configured in this release.</p>
-    <div class="miner-config"><button id="runTroubleshooter" class="button primary" type="button">Analyze current status</button><button id="refreshProposals" class="button" type="button">Refresh proposals</button></div>
+    <div class="miner-config"><button id="runTroubleshooter" class="button primary" type="button">Analyze current status</button><button id="refreshProposals" class="button" type="button">Refresh proposals</button></div><div class="miner-config"><button id="proposeDifficulty" class="button" type="button">Prepare difficulty-change proposal</button><button id="proposeTimeout" class="button" type="button">Prepare timeout-change proposal</button><button id="proposeWorker" class="button" type="button">Prepare worker-action proposal</button></div><div class="inline-note">These buttons prepare review items only. Runtime controls and worker disconnection are not enabled in this release.</div>
     <div id="agentMessage" class="message" role="status">Waiting for a diagnostic run.</div>
     <div class="section-head" style="margin-top:14px"><h3>Proposals & approval history</h3><small>Approval records only; execution disabled</small></div>
     <div id="agentProposals"><div class="empty">No proposals loaded.</div></div>
@@ -410,6 +410,13 @@ async function analyzeCurrentPool(){
  try{for(const p of proposals)await createAgentProposal(p);await loadAgentProposals();setAgentMessage('Analysis complete. Proposals saved for your review; nothing was changed or executed.','success');}
  catch(e){setAgentMessage('Could not save all proposals: '+e.message,'error');}
 }
+async function prepareManualProposal(kind,title,detail,proposal){
+ try{await createAgentProposal({kind,title,detail,proposal});await loadAgentProposals();setAgentMessage('Proposal prepared for your review. No runtime setting or worker was changed.','success');}
+ catch(e){setAgentMessage(e.message,'error');}
+}
+byId('proposeDifficulty').addEventListener('click',()=>prepareManualProposal('difficulty_change','Review share-difficulty settings','Operator requested a review of runtime difficulty behavior. Live pool configuration and current share difficulty have not been changed.','Review MIN_SHARE_DIFFICULTY and START_SHARE_DIFFICULTY in a staging/regtest test first. Runtime application is disabled; do not change the production configuration until the engine control path is authenticated and validated.'));
+byId('proposeTimeout').addEventListener('click',()=>prepareManualProposal('timeout_change','Review worker timeout settings','Operator requested a review of worker timeout behavior. No timeout or disconnect behavior has been changed.','Inspect the pinned CashStratum version for supported timeout settings and validate effects on stale/disconnected miners in regtest. Runtime application is disabled until an authenticated control API and rollback path exist.'));
+byId('proposeWorker').addEventListener('click',()=>prepareManualProposal('worker_action','Review worker-management capability','Worker action requested, but this release does not expose a validated disconnect/ban API.','Identify the exact worker and desired action, inspect supported CashStratum APIs, and implement authentication, audit logging, and rollback before enabling any worker action.'));
 byId('runTroubleshooter').addEventListener('click',analyzeCurrentPool);
 byId('refreshProposals').addEventListener('click',loadAgentProposals);
 function applyDashboard(d){latestDashboard=d;renderHashrateHistory(d);const status=d.status||'unavailable',health=d.health||{},stats=d.stats||{},node=stats.node||{},pool=d.pool_metrics||{},summary=d.share_summary||{},errors=d.errors||{};
