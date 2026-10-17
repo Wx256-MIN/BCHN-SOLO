@@ -1,7 +1,7 @@
 services:
   app_proxy:
     environment:
-      APP_HOST: sslabs-solostrike-cash_dashboard_1
+      APP_HOST: wxbch-solostrike-cash_dashboard_1
       APP_PORT: 3000
 
   # Uses the existing Umbrel Bitcoin Cash Node; does not launch a second node.

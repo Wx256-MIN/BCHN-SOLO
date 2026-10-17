@@ -2,12 +2,12 @@ name: LoneStrike Cash preflight
 on:
   push:
     paths:
-      - "solostrike-cash/**"
-      - ".github/workflows/solostrike-cash-preflight.yml"
+      - "wxbch-solostrike-cash/**"
+      - ".github/workflows/wxbch-solostrike-cash-preflight.yml"
   pull_request:
     paths:
-      - "solostrike-cash/**"
-      - ".github/workflows/solostrike-cash-preflight.yml"
+      - "wxbch-solostrike-cash/**"
+      - ".github/workflows/wxbch-solostrike-cash-preflight.yml"
   workflow_dispatch:
 
 permissions:
@@ -19,21 +19,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check shell syntax
-        run: bash -n solostrike-cash/preflight.sh
+        run: bash -n wxbch-solostrike-cash/preflight.sh
       - name: Validate compose and manifest YAML
         run: |
           python -m pip install --disable-pip-version-check pyyaml
           python - <<'PY'
           import yaml
-          with open("solostrike-cash/docker-compose.yml", encoding="utf-8") as f:
+          with open("wxbch-solostrike-cash/docker-compose.yml", encoding="utf-8") as f:
               compose = yaml.safe_load(f)
-          with open("solostrike-cash/umbrel-app.yml", encoding="utf-8") as f:
+          with open("wxbch-solostrike-cash/umbrel-app.yml", encoding="utf-8") as f:
               manifest = yaml.safe_load(f)
           assert "pool" in compose["services"]
           assert "dashboard" in compose["services"]
           assert "sv2-bridge" in compose["services"]
           assert "sv2-pool" in compose["services"]
-          assert manifest["id"] == "sslabs-solostrike-cash"
+          assert manifest["id"] == "sslabs-wxbch-solostrike-cash"
           assert "bitcoin-cash-node" in manifest["dependencies"]
           for service in ("pool", "dashboard", "sv2-bridge"):
               env = compose["services"][service].get("environment", {})
@@ -46,7 +46,7 @@ jobs:
           set -euo pipefail
           for image in \
             ghcr.io/danhaus93-ops/asicseer-pool:latest \
-            ghcr.io/danhaus93-ops/solostrike-cash-dashboard:latest \
+            ghcr.io/danhaus93-ops/wxbch-solostrike-cash-dashboard:latest \
             ghcr.io/danhaus93-ops/bchn-sv2-bridge:latest \
             ghcr.io/danhaus93-ops/lonestrike-sv2-pool:latest; do
             docker buildx imagetools inspect "$image" >/dev/null
