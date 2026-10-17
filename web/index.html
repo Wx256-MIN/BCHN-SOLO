@@ -704,7 +704,7 @@ let latestEvents=[];
 const numberFormat=new Intl.NumberFormat(undefined,{maximumFractionDigits:2});
 function text(id,value){byId(id).textContent=value===null||value===undefined||value===''?'—':String(value);}
 function setMessage(value,kind=''){message.textContent=value;message.className='message '+kind;}
-function num(value){const n=Number(value);return Number.isFinite(n)?n:null;}
+function num(value){if(value===null||value===undefined||value==='')return null;const n=Number(value);return Number.isFinite(n)?n:null;}
 function fmtNum(value){const n=num(value);return n===null?'—':numberFormat.format(n);}
 function fmtDifficulty(value){const n=num(value);if(n===null)return '—';if(n>=1e12)return (n/1e12).toFixed(2)+'T';if(n>=1e9)return (n/1e9).toFixed(2)+'G';if(n>=1e6)return (n/1e6).toFixed(2)+'M';return numberFormat.format(n);}
 function fmtTime(value){const n=num(value);return n===null?'—':new Date(n*1000).toLocaleTimeString();}
