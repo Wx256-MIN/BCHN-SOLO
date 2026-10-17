@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Umbrel setup page and read-only dashboard proxy for CashStratum's operator API."""
 import json
+import base64
 import os
 import pathlib
 import re
@@ -95,6 +96,67 @@ def _safe_activity(lines):
 
 
 
+def bchn_rpc_call(method, params=None):
+    """Read-only BCHN JSON-RPC helper. Credentials are never returned to the browser."""
+    host = os.environ.get("BCHN_RPC_URL", "").strip()
+    user = os.environ.get("BCHN_RPC_USER", "")
+    password = os.environ.get("BCHN_RPC_PASSWORD", "")
+    if not host or not user or not password:
+        return None, "BCHN RPC verification is not configured for the dashboard"
+    if not host.startswith(("http://", "https://")):
+        host = "http://" + host
+    if not host.endswith("/"):
+        host += "/"
+    body = json.dumps({"jsonrpc": "1.0", "id": "bchn-solo-readonly", "method": method,
+                       "params": params or []}).encode("utf-8")
+    token = base64.b64encode((user + ":" + password).encode("utf-8")).decode("ascii")
+    req = urllib.request.Request(host, data=body, headers={
+        "Authorization": "Basic " + token, "Content-Type": "application/json",
+        "Accept": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=3) as response:
+            result = json.loads(response.read(2_000_000).decode("utf-8"))
+        if not isinstance(result, dict) or result.get("error"):
+            return None, "BCHN RPC returned an error"
+        return result.get("result"), None
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeDecodeError):
+        return None, "BCHN RPC is unavailable or returned invalid data"
+
+
+def _verify_block_events(events):
+    """Cross-check log-derived block hashes against BCHN and calculate coinbase outputs."""
+    verified = []
+    seen = set()
+    for event in events[:20]:
+        block_hash = event.get("block_hash")
+        if not isinstance(block_hash, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", block_hash) or block_hash in seen:
+            continue
+        seen.add(block_hash)
+        header, error = bchn_rpc_call("getblockheader", [block_hash, True])
+        if error or not isinstance(header, dict):
+            continue
+        confirmations = header.get("confirmations")
+        height = header.get("height")
+        reward = None
+        block, block_error = bchn_rpc_call("getblock", [block_hash, 1])
+        if not block_error and isinstance(block, dict):
+            txids = block.get("tx")
+            if isinstance(txids, list) and txids:
+                coinbase, coinbase_error = bchn_rpc_call("getrawtransaction", [txids[0], True, block_hash])
+                if not coinbase_error and isinstance(coinbase, dict):
+                    outputs = coinbase.get("vout", [])
+                    try:
+                        reward = round(sum(float(output["value"]) for output in outputs), 8)
+                    except (KeyError, TypeError, ValueError):
+                        reward = None
+        verified.append({"block_hash": block_hash, "height": height,
+                         "confirmations": confirmations if isinstance(confirmations, int) else None,
+                         "chain_status": "active" if isinstance(confirmations, int) and confirmations > 0 else
+                                         "not in active chain" if confirmations == -1 else "unknown",
+                         "coinbase_output_bch": reward})
+    return verified
+
+
 def _safe_block_events(lines):
     """Return recent block-solve/submission events parsed from pool logs."""
     markers = (
@@ -121,7 +183,7 @@ def _safe_block_events(lines):
             result = "Submitted"
         safe_line = re.sub(r"\b(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?\b", "[redacted-ip]", line)
         safe_line = re.sub(r"bitcoincash:[qp][a-z0-9]{30,}", "bitcoincash:…", safe_line)
-        events.append({"timestamp": timestamp, "result": result, "details": safe_line[:320]})
+        events.append({"timestamp": timestamp, "result": result, "details": safe_line[:320], "block_hash": block_hash})
         if len(events) >= 50:
             break
     return events
@@ -215,7 +277,7 @@ def _collect_dashboard():
             "tracker_error": share_state["error"],
         },
         "shares": share_state["shares"],
-        "blocks": _safe_block_events(lines),
+        "blocks": _safe_block_events(lines),\n        "verified_blocks": _verify_block_events(_safe_block_events(lines)),
         "activity": _safe_activity(lines),
         "errors": errors,
     }
