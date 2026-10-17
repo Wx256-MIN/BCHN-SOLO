@@ -1,47 +1,26 @@
 manifestVersion: 1
 id: sslabs-solostrike-cash
 category: bitcoin
-name: LoneStrike Cash
-version: "1.4.73"
-tagline: Zero-fee BCH solo pool with the first self-hosted Stratum V2 endpoint for Bitcoin Cash
+name: LoneStrike Cash (BCHN)
+version: "1.4.74"
+tagline: BCH solo pool with Stratum V1 and V2, using your existing BCHN node
 icon: https://raw.githubusercontent.com/danhaus93-ops/umbrel-bch-apps/master/sslabs-solostrike-cash/icon.svg
 description: >-
-  LoneStrike Cash is a self-hosted solo mining pool for Bitcoin Cash with dual
-  protocol support: classic Stratum V1 (asicseer-pool, a BCH-native ckpool fork)
-  and the first self-hosted Stratum V2 endpoint on Bitcoin Cash — a complete,
-  Noise-encrypted SV2 stack (Template Provider bridged to your own node plus an
-  SRI pool) with automatic per-miner difficulty.
+  A separate BCH solo-mining pool with Stratum V1 and Stratum V2 support and a
+  dashboard for pool status, workers, shares, and block events. Connects to the
+  existing official Bitcoin Cash Node (BCHN) app using its configured RPC
+  credentials. This app has separate pool data from BCHN-SOLO and does not
+  replace or modify the existing pool.
 
-
-  Point your ASICs at your own pool, backed by your own BCHN node, and keep 100%
-  of every block you find — no pool fees, no custody, no middleman. Native SV2
-  miners and SV1 fleets behind the SRI Translator both work; one dashboard shows
-  every worker, live hashrate, best shares, and found blocks across both
-  protocols. Proven in production with multi-petahash mixed-vendor fleets.
-
-
-  Requires the Bitcoin Cash Node app to be installed and synced.
-
-
-  Displays:
-
-  • Closest Strike gauge — your best share difficulty vs. the network target
-
-  • Pool hashrate, miners online, blocks found, and accepted/rejected shares
-
-  • Per-worker breakdown: hashrate, best share, and last-seen time
-
-  • One-tap stratum connection details for your miners
-
-  • Backing-node status: block height and live network difficulty
-
-  Donations are never expected — but if LoneStrike Labs apps are useful to you, they keep development going: qpp8hg2n60mhhlsr2apw6l60x5vrdq0vp5pq3j4gyt
-developer: LoneStrike Labs
-website: https://github.com/danhaus93-ops/umbrel-bch-apps
+  Requires the Bitcoin Cash Node app to be installed, fully synced, and
+  configured to allow RPC access from this app. Stratum V1 listens on host port
+  3335 and Stratum V2 on host port 33333.
+developer: Wx256-MIN
+website: https://github.com/Wx256-MIN/BCHN-SOLO/tree/main/solostrike-cash
 dependencies:
-  - sslabs-bitcoin-cash-node
-repo: https://github.com/danhaus93-ops/umbrel-bch-apps
-support: https://github.com/danhaus93-ops/umbrel-bch-apps/issues
+  - bitcoin-cash-node
+repo: https://github.com/Wx256-MIN/BCHN-SOLO
+support: https://github.com/Wx256-MIN/BCHN-SOLO/issues
 port: 3000
 gallery: []
 widgets:
@@ -64,22 +43,19 @@ widgets:
       link: ""
       items:
         - title: "Pool hashrate"
-          text: "1.2"
-          subtext: "PH/s"
+          text: "Unavailable"
+          subtext: "waiting for pool data"
         - title: "Miners"
-          text: "7"
+          text: "0"
           subtext: "online"
         - title: "Best share"
-          text: "36.5G"
+          text: "Unavailable"
           subtext: "best diff"
         - title: "Blocks"
           text: "0"
           subtext: "found"
 releaseNotes: >-
-  A found block now resets the round for the whole fleet regardless of which
-  protocol solved it - previously a Stratum V2 block left the V1 side's
-  round climbing. Rented hashrate that cycles many connections for one
-  worker name (such as Braiins) now shows a steady rate computed across all
-  of that worker's connections instead of swinging as connections rotate.
-submitter: LoneStrike Labs
-submission: https://github.com/danhaus93-ops/umbrel-bch-apps
+  BCHN compatibility update: uses the official bitcoin-cash-node dependency and
+  configured node RPC credentials instead of a hard-coded password. Stratum V1
+  uses host port 3335 to avoid conflicting with BCHN-SOLO on port 3333.
+submitter: Wx256-MIN
