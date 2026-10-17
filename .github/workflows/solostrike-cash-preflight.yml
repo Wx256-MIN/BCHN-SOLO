@@ -3,11 +3,11 @@ on:
   push:
     paths:
       - "wxbch-solostrike-cash/**"
-      - ".github/workflows/wxbch-solostrike-cash-preflight.yml"
+      - ".github/workflows/solostrike-cash-preflight.yml"
   pull_request:
     paths:
       - "wxbch-solostrike-cash/**"
-      - ".github/workflows/wxbch-solostrike-cash-preflight.yml"
+      - ".github/workflows/solostrike-cash-preflight.yml"
   workflow_dispatch:
 
 permissions:
@@ -33,7 +33,7 @@ jobs:
           assert "dashboard" in compose["services"]
           assert "sv2-bridge" in compose["services"]
           assert "sv2-pool" in compose["services"]
-          assert manifest["id"] == "sslabs-wxbch-solostrike-cash"
+          assert manifest["id"] == "wxbch-solostrike-cash"
           assert "bitcoin-cash-node" in manifest["dependencies"]
           for service in ("pool", "dashboard", "sv2-bridge"):
               env = compose["services"][service].get("environment", {})
@@ -46,7 +46,7 @@ jobs:
           set -euo pipefail
           for image in \
             ghcr.io/danhaus93-ops/asicseer-pool:latest \
-            ghcr.io/danhaus93-ops/wxbch-solostrike-cash-dashboard:latest \
+            ghcr.io/danhaus93-ops/solostrike-cash-dashboard:latest \
             ghcr.io/danhaus93-ops/bchn-sv2-bridge:latest \
             ghcr.io/danhaus93-ops/lonestrike-sv2-pool:latest; do
             docker buildx imagetools inspect "$image" >/dev/null
