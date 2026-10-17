@@ -1,10 +1,10 @@
 manifestVersion: 1
-id: sslabs-solostrike-cash
+id: wxbch-solostrike-cash
 category: bitcoin
 name: LoneStrike Cash (BCHN)
 version: "1.4.74"
 tagline: BCH solo pool with Stratum V1 and V2, using your existing BCHN node
-icon: https://raw.githubusercontent.com/danhaus93-ops/umbrel-bch-apps/master/sslabs-solostrike-cash/icon.svg
+icon: https://raw.githubusercontent.com/Wx256-MIN/BCHN-SOLO/main/wxbch-solostrike-cash/icon.svg
 description: >-
   A separate BCH solo-mining pool with Stratum V1 and Stratum V2 support and a
   dashboard for pool status, workers, shares, and block events. Connects to the
@@ -16,7 +16,7 @@ description: >-
   configured to allow RPC access from this app. Stratum V1 listens on host port
   3335 and Stratum V2 on host port 33333.
 developer: Wx256-MIN
-website: https://github.com/Wx256-MIN/BCHN-SOLO/tree/main/solostrike-cash
+website: https://github.com/Wx256-MIN/BCHN-SOLO/tree/main/wxbch-solostrike-cash
 dependencies:
   - bitcoin-cash-node
 repo: https://github.com/Wx256-MIN/BCHN-SOLO
