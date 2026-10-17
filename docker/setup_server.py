@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Umbrel setup page and read-only dashboard proxy for CashStratum's operator API."""
 import json
+import math
 import base64
 import os
 import pathlib
@@ -259,13 +260,16 @@ def _collect_dashboard():
             "node": stats.get("node"),
         },
         "pool_metrics": {
-            "hashrate1m": pool_metrics.get("hashrate1m"),
-            "hashrate5m": pool_metrics.get("hashrate5m"),
-            "hashrate1hr": pool_metrics.get("hashrate1hr"),
-            "accepted_difficulty": pool_metrics.get("accepted"),
-            "rejected_difficulty": pool_metrics.get("rejected"),
-            "bestshare": pool_metrics.get("bestshare"),
-            "luck": pool_metrics.get("luck"),
+            "hashrate1m": _numeric_metric(pool_metrics.get("hashrate1m")),
+            "hashrate5m": _numeric_metric(pool_metrics.get("hashrate5m")),
+            "hashrate1hr": _numeric_metric(pool_metrics.get("hashrate1hr")),
+            "accepted_difficulty": _numeric_metric(pool_metrics.get("accepted")),
+            "rejected_difficulty": _numeric_metric(pool_metrics.get("rejected")),
+            "bestshare": _numeric_metric(pool_metrics.get("bestshare")),
+            "network_difficulty": _first_numeric_metric(
+                pool_metrics.get("network_difficulty"), pool_metrics.get("networkdifficulty"), pool_metrics.get("networkdiff")
+            ),
+            "luck": _numeric_metric(pool_metrics.get("luck")),
         },
         "share_summary": {
             "sampled": len(share_state["shares"]),
@@ -475,23 +479,65 @@ def shares_snapshot():
     }, None
 
 
+def _numeric_metric(value):
+    """Return a finite numeric metric, including common API value wrappers; never coerce missing data to zero."""
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, dict):
+        for key in ("value", "hashrate", "rate", "total", "count"):
+            if key in value:
+                parsed = _numeric_metric(value.get(key))
+                if parsed is not None:
+                    return parsed
+        return None
+    if isinstance(value, (int, float)):
+        return value if math.isfinite(value) else None
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw:
+            return None
+        try:
+            parsed = float(raw)
+        except ValueError:
+            return None
+        return parsed if math.isfinite(parsed) else None
+    return None
+
+
+def _first_numeric_metric(*values):
+    for value in values:
+        parsed = _numeric_metric(value)
+        if parsed is not None:
+            return parsed
+    return None
+
+
 def _record_history(payload):
     """Persist bounded, privacy-safe hashrate and chain metric samples."""
     stats = payload.get("stats") or {}
     pool = payload.get("pool_metrics") or {}
     node = stats.get("node") or {}
+    if not isinstance(stats, dict):
+        stats = {}
+    if not isinstance(pool, dict):
+        pool = {}
+    if not isinstance(node, dict):
+        node = {}
     sample = {
         "timestamp": int(payload.get("generated_at") or time.time()),
-        "hashrate": pool.get("hashrate1m") or stats.get("hashrate"),
-        "hashrate5m": pool.get("hashrate5m"),
-        "hashrate1hr": pool.get("hashrate1hr"),
-        "workers": stats.get("workers"),
-        "users": stats.get("users"),
-        "block_height": stats.get("block_height") or node.get("blocks"),
-        "network_difficulty": node.get("difficulty"),
-        "best_share": pool.get("bestshare"),
-        "accepted_difficulty": pool.get("accepted_difficulty"),
-        "rejected_difficulty": pool.get("rejected_difficulty"),
+        "hashrate": _first_numeric_metric(pool.get("hashrate1m"), pool.get("hashrate5m"), stats.get("hashrate")),
+        "hashrate5m": _first_numeric_metric(pool.get("hashrate5m")),
+        "hashrate1hr": _first_numeric_metric(pool.get("hashrate1hr")),
+        "workers": _first_numeric_metric(stats.get("workers")),
+        "users": _first_numeric_metric(stats.get("users")),
+        "block_height": _first_numeric_metric(stats.get("block_height"), node.get("blocks")),
+        "network_difficulty": _first_numeric_metric(
+            node.get("difficulty"), node.get("network_difficulty"),
+            pool.get("network_difficulty"), pool.get("networkdifficulty"), pool.get("networkdiff")
+        ),
+        "best_share": _numeric_metric(pool.get("bestshare")),
+        "accepted_difficulty": _first_numeric_metric(pool.get("accepted_difficulty"), pool.get("accepted")),
+        "rejected_difficulty": _first_numeric_metric(pool.get("rejected_difficulty"), pool.get("rejected")),
     }
     with HISTORY_LOCK:
         rows = []
