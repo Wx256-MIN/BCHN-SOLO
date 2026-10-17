@@ -401,6 +401,57 @@ body.dark-mode .sidebar-status{background:#061c30}
 @media(max-width:760px){.dashboard-tabs{margin:0 -1px 13px;gap:4px}.dashboard-tab{padding:10px 11px}.dashboard-tab span{font-size:10px}.theme-toggle{font-size:10px;padding:7px 8px}}
 @media(prefers-reduced-motion:reduce){.tab-panel{animation:none}.dashboard-tab{transition:none}}
 
+
+/* LoneStrike-inspired dark green/mint skin. Keep BCHN-SOLO's own layout and API IDs. */
+body.dark-mode,body.dark-mode .shell{background:radial-gradient(110% 90% at 50% -10%,#0c3a2f 0%,#08221c 43%,#051914 100%);color:#e6f4ee}
+body.dark-mode .dashboard-top-strip{background:#051914;color:#9fc2b4;border-bottom:1px solid #11473b}
+body.dark-mode .pool-sidebar{background:linear-gradient(180deg,#08221c 0%,#073127 55%,#051914 100%);border-right:1px solid #18594a}
+body.dark-mode .sidebar-brand small,body.dark-mode .sidebar-nav a{color:#a4c6b8}
+body.dark-mode .sidebar-nav a span{color:#5fbda0}
+body.dark-mode .sidebar-nav a:hover{background:#10b98118;color:#f0fff8}
+body.dark-mode .sidebar-nav a.active{background:#0d6c51;border-color:#10b981;color:#f4fff9;box-shadow:0 5px 14px #001a3029}
+body.dark-mode .sidebar-nav a.active span{color:#d4fff0}
+body.dark-mode .sidebar-status{background:#08221c;border-color:#18594a;color:#e6f4ee}
+body.dark-mode .sidebar-status small{color:#8db5a4}
+body.dark-mode .sidebar-status .sidebar-version{color:#34d399}
+body.dark-mode .topbar{background:linear-gradient(180deg,#0a2e26,#08221c);border-color:#18594a}
+body.dark-mode .brand h1,body.dark-mode .intro h2,body.dark-mode .section-head h3,body.dark-mode .panel summary{color:#e6f4ee}
+body.dark-mode .eyebrow,body.dark-mode .sub,body.dark-mode .updated,body.dark-mode .card-label,body.dark-mode .card-foot,body.dark-mode .section-head small,body.dark-mode .inline-note,body.dark-mode .panel p,body.dark-mode .footer{color:#8fb3a4}
+body.dark-mode .card,body.dark-mode .panel,body.dark-mode .block-found-panel,body.dark-mode .strike-card{background:linear-gradient(180deg,#0a2e26,#08221c);border-color:#18594a;color:#e6f4ee;box-shadow:0 8px 24px #00000018}
+body.dark-mode .big,body.dark-mode .chain-stat strong,body.dark-mode .block-metric strong{color:#f1fff8}
+body.dark-mode .mini-chip,body.dark-mode .chain-stat,body.dark-mode .config-item,body.dark-mode .event,body.dark-mode .tabbar{background:#0a2e26;border-color:#18594a;color:#a7c8ba}
+body.dark-mode .status-pill{background:#0a2e26;border-color:#18594a;color:#d4efe4}
+body.dark-mode .dot.online,body.dark-mode .sidebar-status-dot{background:#10b981;box-shadow:0 0 0 4px #10b98120}
+body.dark-mode .button{background:#0d3a30;border-color:#18594a;color:#dff8ed}
+body.dark-mode .button:hover{background:#11473b}
+body.dark-mode .button.primary,body.dark-mode .dashboard-tab.active,body.dark-mode .tab-button.active{background:#087f62;border-color:#10b981;color:#f4fff9}
+body.dark-mode .button.primary:hover{background:#0b9a73}
+body.dark-mode .dashboard-tabs{background:#08221c;border-color:#18594a}
+body.dark-mode .dashboard-tab{color:#9fc2b4}
+body.dark-mode .dashboard-tab:hover{background:#0d3a30;color:#f4fff9}
+body.dark-mode input,body.dark-mode select,body.dark-mode textarea,body.dark-mode .field input{background:#051914!important;color:#e6f4ee!important;border-color:#18594a!important}
+body.dark-mode th{color:#8fb3a4;border-color:#18594a}
+body.dark-mode td{color:#d2e9df;border-color:#11473b}
+body.dark-mode .progress,body.dark-mode .strike-meter{background:#164438;border-color:#18594a}
+body.dark-mode .progress>span,body.dark-mode .strike-meter span{background:linear-gradient(90deg,#10b981,#34d399)}
+body.dark-mode .block-found-panel{background:linear-gradient(110deg,#0d3a30,#08221c 58%,#071c17);border-color:#94722c}
+body.dark-mode .block-found-heading span{background:#08221c;border-color:#34d399;color:#34d399}
+body.dark-mode .block-metric span{color:#8fb3a4}
+body.dark-mode .block-art{color:#34d399}
+body.dark-mode .strike-value{color:#34d399}
+body.dark-mode .protocol-pill{background:#0a2e26;border-color:#18594a;color:#9ce5c8}
+body.dark-mode .field label{color:#b9d5c9}
+body.dark-mode .config-item code{color:#34d399}
+body.dark-mode .message{color:#a4c6b8}
+body.dark-mode .tag.muted{background:#164438;color:#c3e0d4}
+body.dark-mode .tag.ok{background:#103c32;color:#78e0b8}
+body.dark-mode .tag.bad{background:#4a202b;color:#ffb6bf}
+body.dark-mode .empty{color:#8fb3a4}
+body.dark-mode #hashrateChart svg line{stroke:#18594a!important}
+body.dark-mode #hashrateChart svg polyline{stroke:#34d399!important}
+body.dark-mode #hashrateChart svg text{fill:#8fb3a4!important}
+@media(prefers-reduced-motion:reduce){body *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -681,7 +732,7 @@ body.dark-mode .sidebar-status{background:#061c30}
     if(toggle){toggle.setAttribute('aria-pressed',String(dark));toggle.textContent=dark?'☀ Light mode':'☾ Dark mode';toggle.title=dark?'Switch to light theme':'Switch to dark theme';}
     try{localStorage.setItem('bchn-solo-dashboard-theme',dark?'dark':'light');}catch(e){}
   }
-  let savedTheme='light';
+  let savedTheme='dark';
   try{savedTheme=localStorage.getItem('bchn-solo-dashboard-theme')||'light';}catch(e){}
   setTheme(savedTheme==='dark');
   if(toggle)toggle.addEventListener('click',()=>setTheme(!document.body.classList.contains('dark-mode')));
@@ -757,15 +808,16 @@ function renderDiagnostics(d){const health=d.health||{},stats=d.stats||{},node=s
 function renderHashrateHistory(d){
   const history=(d.history&&Array.isArray(d.history.samples))?d.history.samples:[];
   const valid=history.filter(p=>num(p.hashrate)!==null&&num(p.timestamp)!==null);
-  const latest=valid.length?valid[valid.length-1]:null;
+  const latest=history.length?history[history.length-1]:null;
+  const validLatest=valid.length?valid[valid.length-1]:null;
   const peak=valid.reduce((best,p)=>!best||num(p.hashrate)>num(best.hashrate)?p:best,null);
-  text('historyLatestHashrate',latest?String(latest.hashrate):'—');
-  text('historyPeakHashrate',peak?String(peak.hashrate):'—');
-  text('historyNetworkDifficulty',latest?fmtDifficulty(latest.network_difficulty):'—');
-  text('historyLatestWorkers',latest?fmtNum(latest.workers):'—');
-  text('historyCaption',(d.history?.sample_count??history.length)+' retained samples · max '+(d.history?.retention_limit??1000));
+  text('historyLatestHashrate',validLatest?String(validLatest.hashrate):'Unavailable');
+  text('historyPeakHashrate',peak?String(peak.hashrate):'Unavailable');
+  text('historyNetworkDifficulty',latest&&num(latest.network_difficulty)!==null?fmtDifficulty(latest.network_difficulty):'Unavailable');
+  text('historyLatestWorkers',latest&&num(latest.workers)!==null?fmtNum(latest.workers):'Unavailable');
+  text('historyCaption',(d.history?.sample_count??history.length)+' retained samples · '+valid.length+' valid hashrate samples · max '+(d.history?.retention_limit??1000));
   const root=byId('hashrateChart');
-  if(valid.length<2){root.innerHTML='<div class="empty">History is being collected. At least two valid samples are needed to draw the chart.</div>';return;}
+  if(valid.length<2){root.innerHTML='<div class="empty">'+(history.length?'Only '+valid.length+' valid hashrate sample(s) out of '+history.length+' retained records. Waiting for real pool metrics; unavailable values are not treated as zero.':'No history samples have been collected yet. Check monitoring API health.')+'</div>';return;}
   const width=860,height=150,pad=22,values=valid.map(p=>num(p.hashrate)),lo=Math.min(...values),hi=Math.max(...values),range=(hi-lo)||1;
   const points=values.map((v,i)=>{const x=pad+i*(width-pad*2)/(values.length-1),y=height-pad-(v-lo)*(height-pad*2)/range;return x.toFixed(1)+','+y.toFixed(1)}).join(' ');
   const first=new Date(valid[0].timestamp*1000).toLocaleString(),lastTime=new Date(valid[valid.length-1].timestamp*1000).toLocaleString();
@@ -830,21 +882,22 @@ byId('refreshProposals').addEventListener('click',loadAgentProposals);
 function applyDashboard(d){latestDashboard=d;renderHashrateHistory(d);const status=d.status||'unavailable',health=d.health||{},stats=d.stats||{},node=stats.node||{},pool=d.pool_metrics||{},summary=d.share_summary||{},errors=d.errors||{};
   const dot=byId('statusDot');dot.className='dot '+(status==='online'?'online':status==='unavailable'?'offline':'');text('statusText',status==='online'?'Pool online':status==='starting'?'Starting':'Monitoring unavailable');
   text('poolStatus',status==='online'?'ONLINE':status==='starting'?'STARTING':'OFFLINE');text('poolStatusChip',status.toUpperCase());const uptime=num(health.uptime);text('poolUptime',uptime===null?'—':uptime>=86400?Math.floor(uptime/86400)+'d '+Math.floor((uptime%86400)/3600)+'h':uptime>=3600?Math.floor(uptime/3600)+'h '+Math.floor((uptime%3600)/60)+'m':Math.floor(uptime/60)+'m');text('poolStatusFoot',health.log_exists?'Pool log detected':health.api_up?'API is up; waiting for pool log':(errors.stats||errors.health||'Waiting for monitoring API'));
-  const rate1=pool.hashrate1m??stats.hashrate;text('hashrate',rate1===null||rate1===undefined||rate1===''?'—':rate1);text('hashrateFoot','5m average: '+(pool.hashrate5m??'—')+' · 1h: '+(pool.hashrate1hr??'—'));
-  text('workers',stats.workers===undefined?'—':fmtNum(stats.workers));text('users',stats.users===undefined?'—':fmtNum(stats.users));
+  const rate1=pool.hashrate1m??stats.hashrate;const rateMissing=rate1===null||rate1===undefined||rate1==='';text('hashrate',rateMissing?'Unavailable':rate1);text('hashrateFoot','5m average: '+(pool.hashrate5m??'Unavailable')+' · 1h: '+(pool.hashrate1hr??'Unavailable'));
+  text('workers',stats.workers===undefined||stats.workers===null?'Unavailable':fmtNum(stats.workers));text('users',stats.users===undefined||stats.users===null?'Unavailable':fmtNum(stats.users));
   const trackerReady=summary.tracker_ready===true;const sample=summary.sampled??0;text('accepted',trackerReady?fmtNum(summary.accepted):'—');text('rejected',trackerReady?fmtNum(summary.rejected):'—');const baseline=num(summary.baseline_records)??0;const foot=!trackerReady?'Starting share counter…':'Baseline '+fmtNum(baseline)+' + new records';text('acceptedFoot',foot);text('rejectedFoot',foot);
   text('bestshare',fmtDifficulty(pool.bestshare));text('luck',num(pool.luck)===null?'—':fmtNum(pool.luck)+'%');
-  const bestDiff=num(pool.bestshare),networkDiff=num(node.difficulty);
-  text('strikeBest',fmtDifficulty(pool.bestshare));text('strikeNetwork',fmtDifficulty(node.difficulty));
+  const networkDifficulty=node.difficulty??pool.network_difficulty??pool.networkdifficulty??pool.networkdiff;
+  const bestDiff=num(pool.bestshare),networkDiff=num(networkDifficulty);
+  text('strikeBest',fmtDifficulty(pool.bestshare));text('strikeNetwork',fmtDifficulty(networkDifficulty));
   const strikeRatio=bestDiff!==null&&networkDiff!==null&&bestDiff>0&&networkDiff>0?(bestDiff/networkDiff)*100:null;
   const strikePercent=strikeRatio===null?0:Math.min(100,strikeRatio);
   byId('strikeMeter').style.width=strikePercent+'%';
   byId('strikeMeter').parentElement.setAttribute('aria-valuenow',String(Math.round(strikePercent*100)/100));
   text('strikeValue',strikeRatio===null?'Waiting for metrics':(strikeRatio>=100?'Network target reached':fmtNum(strikeRatio)+'% of network target'));
   text('strikeNote',strikeRatio===null?'Need both best-share difficulty and live network difficulty to calculate the gauge.':'Estimated progress based on best share ÷ network difficulty. Mining remains probabilistic; this gauge is not a block prediction.');
-  const height=stats.block_height??node.blocks;text('height',height===undefined||height===null?'—':fmtNum(height));text('headers',node.headers===undefined?'—':fmtNum(node.headers));text('chain',node.chain||'—');text('netdiff',fmtDifficulty(node.difficulty));
+  const height=stats.block_height??node.blocks;text('height',height===undefined||height===null?'Unavailable':fmtNum(height));text('headers',node.headers===undefined||node.headers===null?'Unavailable':fmtNum(node.headers));text('chain',node.chain||'Unavailable');text('netdiff',fmtDifficulty(networkDifficulty));
   const synced=node.synced===true;const nodeKnown=Object.keys(node).length>0;text('chainChip',!nodeKnown?'Node status unavailable':synced?'Synced':node.ibd===true?'Initial sync':'Behind headers');
-  const progress=num(node.progress_pct);byId('syncProgress').style.width=(progress===null?0:Math.max(0,Math.min(100,progress)))+'%';text('syncNote',!nodeKnown?'Check BCHN RPC connectivity.':synced?'BCHN reports that initial download is complete.':'Sync progress: '+(progress===null?'unknown':fmtNum(progress)+'%')+'. Do not mine on a node that is not synced.');
+  const progress=num(node.progress_pct);byId('syncProgress').style.width=(progress===null?0:Math.max(0,Math.min(100,progress)))+'%';text('syncNote',!nodeKnown?'BCHN node metrics unavailable; check node/API connectivity.':synced?'BCHN reports that initial download is complete.':'Sync progress: '+(progress===null?'unavailable':fmtNum(progress)+'%')+'. Do not mine on a node that is not synced.');
   renderDiagnostics(d);showEvents(d.activity||[]);showBlockHistory(d.blocks||[],d.verified_blocks||[]);showShares(d.shares||[],summary.tracker_ready?'No new share records since tracking started.':(summary.tracker_error?'Share tracker unavailable: '+summary.tracker_error:'Initializing share-history tracker…'));updateBlockSummary(d.blocks||[]);text('shareCaption',shareFeedCaption(sample,summary.last_checked_at,summary.tracker_ready,summary.tracker_error));
   const stamp=num(d.generated_at);text('updated',stamp===null?'Update time unavailable':'Updated '+new Date(stamp*1000).toLocaleTimeString());
 }
