@@ -353,6 +353,54 @@ body{background:#f3f6fa;color:#172a40;min-height:100vh}
 @media(max-width:760px){.pool-sidebar{position:relative;width:auto;inset:auto;padding:12px;display:block}.sidebar-brand{padding:0 4px 12px}.sidebar-logo{width:34px;height:34px;font-size:21px}.sidebar-nav{flex-direction:row;overflow-x:auto;padding-bottom:3px}.sidebar-nav a{flex:0 0 auto;min-height:38px;padding:0 10px;font-size:10px}.sidebar-nav a span{font-size:15px}.sidebar-status{display:none}.dashboard-top-strip{margin-left:0;height:28px;padding:0 12px;font-size:9px}.shell{margin-left:0;padding:14px 12px 28px}.topbar{margin:-14px -12px 15px;padding:12px;gap:12px}.topbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start;width:100%}.intro{margin-top:4px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.sidebar-nav a{font-size:9px;gap:7px}.sidebar-nav a span{display:none}.grid{gap:8px}.card{padding:12px}.big{font-size:21px}.card-foot{font-size:10px}.top-actions .button,.top-actions select{font-size:10px;padding:7px 8px}.brand h1{font-size:19px}.block-found-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.block-found-heading{margin:-20px 0 2px}}
 
+
+/* Dark mode and organized dashboard tabs */
+.dashboard-tabs{display:flex;align-items:center;gap:6px;overflow-x:auto;margin:0 0 16px;padding:6px;background:#eaf0f6;border:1px solid #dbe5ee;border-radius:10px}
+.dashboard-tab{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:7px;background:transparent;color:#526b82;padding:10px 14px;font:700 11px/1.2 inherit;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s,border-color .15s}
+.dashboard-tab:hover{background:#fff;color:#163957}
+.dashboard-tab.active{background:#087cf0;color:#fff;border-color:#087cf0;box-shadow:0 3px 8px #087cf024}
+.dashboard-tab:focus-visible,.theme-toggle:focus-visible{outline:3px solid #22b8ac;outline-offset:2px}
+#dashboardTabPanels{min-width:0}
+.tab-panel{min-width:0;animation:tabFadeIn .16s ease-out}
+.tab-panel[hidden]{display:none!important}
+.tab-panel>.panel,.tab-panel>.card,.tab-panel>.grid,.tab-panel>.section-grid,.tab-panel>.block-found-panel{margin-bottom:14px}
+.tab-panel>.card[style*="margin-top"]{margin-top:0!important}
+.theme-toggle{white-space:nowrap}
+@keyframes tabFadeIn{from{opacity:.72;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+body.dark-mode,body.dark-mode .shell{background:#0c1522;color:#dce7f3}
+body.dark-mode .dashboard-top-strip{background:#050d18;color:#a9c1d8}
+body.dark-mode .topbar{background:#101d2d;border-color:#26374b}
+body.dark-mode .brand h1,body.dark-mode .intro h2,body.dark-mode .section-head h3,body.dark-mode .panel summary{color:#e7f0fa}
+body.dark-mode .eyebrow,body.dark-mode .sub,body.dark-mode .updated,body.dark-mode .card-label,body.dark-mode .card-foot,body.dark-mode .section-head small,body.dark-mode .inline-note,body.dark-mode .panel p,body.dark-mode .footer{color:#9bb0c6}
+body.dark-mode .card,body.dark-mode .panel,body.dark-mode .block-found-panel{background:#121f30;border-color:#293c51;color:#dce7f3;box-shadow:0 3px 12px #0000001c}
+body.dark-mode .big,body.dark-mode .chain-stat strong,body.dark-mode .block-metric strong{color:#e9f3ff}
+body.dark-mode .mini-chip,body.dark-mode .chain-stat,body.dark-mode .config-item,body.dark-mode .event,body.dark-mode .tabbar{background:#17283b;border-color:#2b4057;color:#b8cadd}
+body.dark-mode .status-pill{background:#17283b;border-color:#2b4057;color:#c7d8e9}
+body.dark-mode .button{background:#17283b;border-color:#30465e;color:#d7e6f5}
+body.dark-mode .button:hover{background:#20364d}
+body.dark-mode .button.primary,body.dark-mode .dashboard-tab.active,body.dark-mode .tab-button.active{background:#087cf0;border-color:#168cff;color:#fff}
+body.dark-mode .dashboard-tabs{background:#0f1b2a;border-color:#263a50}
+body.dark-mode .dashboard-tab{color:#a9bed2}
+body.dark-mode .dashboard-tab:hover{background:#1a2b3e;color:#fff}
+body.dark-mode .dashboard-tab.active{background:#087cf0;color:#fff}
+body.dark-mode input,body.dark-mode select,body.dark-mode textarea,body.dark-mode .field input{background:#0b1522!important;color:#e3edf8!important;border-color:#30465e!important}
+body.dark-mode .table-wrap table{color:#dce7f3}
+body.dark-mode th{color:#a4bad0;border-color:#2b3c50}
+body.dark-mode td{color:#d0deec;border-color:#25364a}
+body.dark-mode .progress,body.dark-mode .strike-meter{background:#23354a;border-color:#2c4158}
+body.dark-mode .block-found-panel{background:linear-gradient(110deg,#121f30,#10263a)}
+body.dark-mode .block-found-heading span{background:#15283b}
+body.dark-mode .strike-card{background:#121f30;border-color:#293c51}
+body.dark-mode .message{color:#a9bfd3}
+body.dark-mode .tag.muted{background:#26374a;color:#c0d1e2}
+body.dark-mode .tag.ok{background:#103c32;color:#78e0b8}
+body.dark-mode .tag.bad{background:#4a202b;color:#ffb6bf}
+body.dark-mode .empty{color:#92a8be}
+body.dark-mode .table-wrap{border-color:#2a3d52}
+body.dark-mode .sidebar-status{background:#061c30}
+@media(max-width:760px){.dashboard-tabs{margin:0 -1px 13px;gap:4px}.dashboard-tab{padding:10px 11px}.dashboard-tab span{font-size:10px}.theme-toggle{font-size:10px;padding:7px 8px}}
+@media(prefers-reduced-motion:reduce){.tab-panel{animation:none}.dashboard-tab{transition:none}}
+
 </style>
 </head>
 <body>
@@ -378,9 +426,25 @@ body{background:#f3f6fa;color:#172a40;min-height:100vh}
 <div class="shell">
   <header class="topbar">
     <div class="brand"><div class="mark">₿</div><div><div class="eyebrow">Bitcoin Cash · Solo Mining</div><h1>BCHN-SOLO</h1></div></div>
-    <div class="top-actions"><div class="status-pill"><span id="statusDot" class="dot"></span><span id="statusText">Connecting…</span></div><label class="mini-chip" for="refreshRate">Auto refresh</label><select id="refreshRate" class="button" aria-label="Dashboard refresh interval"><option value="5">5 sec</option><option value="15" selected>15 sec</option><option value="30">30 sec</option><option value="60">60 sec</option><option value="0">Off</option></select><button id="exportDashboard" class="button" type="button">Export JSON</button><button id="copyMinerConfig" class="button" type="button">Copy miner config</button><button id="refresh" class="button" type="button">↻ Refresh</button></div>
+    <div class="top-actions"><div class="status-pill"><span id="statusDot" class="dot"></span><span id="statusText">Connecting…</span></div><label class="mini-chip" for="refreshRate">Auto refresh</label><select id="refreshRate" class="button" aria-label="Dashboard refresh interval"><option value="5">5 sec</option><option value="15" selected>15 sec</option><option value="30">30 sec</option><option value="60">60 sec</option><option value="0">Off</option></select><button id="exportDashboard" class="button" type="button">Export JSON</button><button id="copyMinerConfig" class="button" type="button">Copy miner config</button><button id="themeToggle" class="button theme-toggle" type="button" aria-pressed="false" title="Switch dashboard theme">☾ Dark mode</button><button id="refresh" class="button" type="button">↻ Refresh</button></div>
   </header>
   <div class="intro"><div><h2>Pool overview</h2><div class="sub">Live node, worker, share and pool activity</div></div><div id="updated" class="updated">Waiting for first update</div></div>
+
+  <nav class="dashboard-tabs" id="dashboardTabs" aria-label="Dashboard sections" role="tablist">
+    <button class="dashboard-tab active" type="button" role="tab" id="tabBtn-overview" aria-controls="tab-overview" aria-selected="true" data-tab="overview">▦ <span>Overview</span></button>
+    <button class="dashboard-tab" type="button" role="tab" id="tabBtn-shares" aria-controls="tab-shares" aria-selected="false" data-tab="shares">▤ <span>Shares & Workers</span></button>
+    <button class="dashboard-tab" type="button" role="tab" id="tabBtn-history" aria-controls="tab-history" aria-selected="false" data-tab="history">⌁ <span>History & Blocks</span></button>
+    <button class="dashboard-tab" type="button" role="tab" id="tabBtn-tools" aria-controls="tab-tools" aria-selected="false" data-tab="tools">⚙ <span>Tools & Diagnostics</span></button>
+    <button class="dashboard-tab" type="button" role="tab" id="tabBtn-settings" aria-controls="tab-settings" aria-selected="false" data-tab="settings">☷ <span>Setup</span></button>
+  </nav>
+  <div id="dashboardTabPanels">
+    <div class="tab-panel" id="tab-overview" role="tabpanel" aria-labelledby="tabBtn-overview"></div>
+    <div class="tab-panel" id="tab-shares" role="tabpanel" aria-labelledby="tabBtn-shares" hidden></div>
+    <div class="tab-panel" id="tab-history" role="tabpanel" aria-labelledby="tabBtn-history" hidden></div>
+    <div class="tab-panel" id="tab-tools" role="tabpanel" aria-labelledby="tabBtn-tools" hidden></div>
+    <div class="tab-panel" id="tab-settings" role="tabpanel" aria-labelledby="tabBtn-settings" hidden></div>
+  </div>
+
 
   <section class="grid" aria-label="Pool metrics">
     <article class="card"><div class="metric-row"><span class="card-label">Pool status</span><span id="poolStatusChip" class="mini-chip">CHECKING</span></div><div id="poolStatus" class="big">—</div><div id="poolStatusFoot" class="card-foot">Monitoring API status</div></article>
@@ -530,6 +594,75 @@ body{background:#f3f6fa;color:#172a40;min-height:100vh}
   <div class="footer">BCHN-SOLO · Monitoring refreshes every 15 seconds · Operator API stays private to the app network</div>
 </div>
 <script>
+
+/* Organize existing dashboard sections into accessible tabs without changing their IDs or API behavior. */
+(function initDashboardTabsAndTheme(){
+  const shell=document.querySelector('.shell');
+  const panels={
+    overview:document.getElementById('tab-overview'),
+    shares:document.getElementById('tab-shares'),
+    history:document.getElementById('tab-history'),
+    tools:document.getElementById('tab-tools'),
+    settings:document.getElementById('tab-settings')
+  };
+  if(shell && panels.overview && !panels.overview.dataset.initialized){
+    const groups={
+      overview:['.grid[aria-label="Pool metrics"]','.strike-card','.section-grid','.block-found-panel'],
+      shares:['.card[style*="margin-top:15px"]'],
+      history:['#hashrateHistoryPanel','#blockHistoryPanel'],
+      tools:['#electricityPanel','#diagnosticsPanel','#troubleshootingAgentPanel'],
+      settings:['#setupPanel']
+    };
+    Object.entries(groups).forEach(([tab,selectors])=>{
+      selectors.forEach(selector=>{
+        const node=shell.querySelector(selector);
+        if(node && !node.closest('#dashboardTabPanels')) panels[tab].appendChild(node);
+      });
+    });
+    const footer=shell.querySelector('.footer');
+    if(footer) panels.settings.appendChild(footer);
+    Object.values(panels).forEach(panel=>{if(panel)panel.dataset.initialized='true';});
+  }
+  const tabs=[...document.querySelectorAll('.dashboard-tab[data-tab]')];
+  function selectTab(name,focus){
+    if(!panels[name])name='overview';
+    tabs.forEach(tab=>{
+      const active=tab.dataset.tab===name;
+      tab.classList.toggle('active',active);
+      tab.setAttribute('aria-selected',String(active));
+      tab.tabIndex=active?0:-1;
+    });
+    Object.entries(panels).forEach(([key,panel])=>{if(panel)panel.hidden=key!==name;});
+    try{localStorage.setItem('bchn-solo-dashboard-tab',name);}catch(e){}
+    if(focus){const active=tabs.find(t=>t.dataset.tab===name);if(active)active.focus();}
+  }
+  tabs.forEach((tab,index)=>{
+    tab.addEventListener('click',()=>selectTab(tab.dataset.tab,false));
+    tab.addEventListener('keydown',event=>{
+      let next=index;
+      if(event.key==='ArrowRight')next=(index+1)%tabs.length;
+      else if(event.key==='ArrowLeft')next=(index-1+tabs.length)%tabs.length;
+      else if(event.key==='Home')next=0;
+      else if(event.key==='End')next=tabs.length-1;
+      else return;
+      event.preventDefault();selectTab(tabs[next].dataset.tab,true);
+    });
+  });
+  let savedTab='overview';
+  try{savedTab=localStorage.getItem('bchn-solo-dashboard-tab')||'overview';}catch(e){}
+  selectTab(savedTab,false);
+  const toggle=document.getElementById('themeToggle');
+  function setTheme(dark){
+    document.body.classList.toggle('dark-mode',dark);
+    if(toggle){toggle.setAttribute('aria-pressed',String(dark));toggle.textContent=dark?'☀ Light mode':'☾ Dark mode';toggle.title=dark?'Switch to light theme':'Switch to dark theme';}
+    try{localStorage.setItem('bchn-solo-dashboard-theme',dark?'dark':'light');}catch(e){}
+  }
+  let savedTheme='light';
+  try{savedTheme=localStorage.getItem('bchn-solo-dashboard-theme')||'light';}catch(e){}
+  setTheme(savedTheme==='dark');
+  if(toggle)toggle.addEventListener('click',()=>setTheme(!document.body.classList.contains('dark-mode')));
+})();
+
 const appBase=(window.location.pathname.replace(/\/+$/,'')||'')+'/';
 const favicon=document.getElementById('appFavicon');
 if(favicon)favicon.href=appBase+'favicon.svg?v=0.2.1';
