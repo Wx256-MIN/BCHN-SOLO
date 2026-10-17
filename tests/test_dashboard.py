@@ -56,3 +56,23 @@ class DashboardRegressionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_history_renderer_distinguishes_invalid_samples_from_empty_history(self):
+        self.assertIn("valid hashrate samples", HTML)
+        self.assertIn("unavailable values are not treated as zero", HTML)
+        self.assertIn("text('historyLatestHashrate',validLatest?String(validLatest.hashrate):'Unavailable')", HTML)
+
+    def test_dark_theme_defaults_to_lonestrike_green_palette(self):
+        self.assertIn("let savedTheme='dark';", HTML)
+        self.assertIn("#051914", HTML)
+        self.assertIn("#34d399", HTML)
+
+    def test_history_normalizes_numeric_metrics_and_keeps_missing_values_null(self):
+        source = (ROOT / "docker" / "setup_server.py").read_text(encoding="utf-8")
+        self.assertIn("def _numeric_metric(value):", source)
+        self.assertIn('"hashrate": _first_numeric_metric(pool.get("hashrate1m"), pool.get("hashrate5m"), stats.get("hashrate"))', source)
+        self.assertIn('"network_difficulty": _first_numeric_metric(', source)
+        self.assertIn("math.isfinite(value)", source)
+
+    def test_dashboard_uses_pool_network_difficulty_fallback(self):
+        self.assertIn("pool.network_difficulty??pool.networkdifficulty??pool.networkdiff", HTML)
