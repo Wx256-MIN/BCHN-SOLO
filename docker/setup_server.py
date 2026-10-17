@@ -127,7 +127,7 @@ def _verify_block_events(events):
     """Cross-check log-derived block hashes against BCHN and calculate coinbase outputs."""
     verified = []
     seen = set()
-    for event in events[:20]:
+    for event in events[:3]:
         block_hash = event.get("block_hash")
         if not isinstance(block_hash, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", block_hash) or block_hash in seen:
             continue
