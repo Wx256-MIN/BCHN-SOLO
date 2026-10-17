@@ -1,128 +1,92 @@
-# BCHN-SOLO
+# BCHN-SOLO — LoneStrike Cash
 
-**A self-hosted Bitcoin Cash solo-mining pool built on the CKPool lineage.**
+**A self-hosted Bitcoin Cash (BCH) solo-mining pool app for UmbrelOS, designed to use your existing Bitcoin Cash Node (BCHN).**
 
-This repository packages [CashStratum](https://github.com/cashstratum/cashstratum), an actively maintained BCH-specific CKPool fork, for a small, private, zero-fee solo pool using your existing Bitcoin Cash Node (BCHN). It is not a reimplementation of the mining protocol; the upstream C engine performs Stratum, job construction, share validation, and block submission.
+This repository currently packages **LoneStrike Cash (BCHN)** as an Umbrel community app. It includes Stratum V1 and Stratum V2 pool services plus a dashboard. It is intended to connect to the existing `bitcoin-cash-node` app rather than run a second BCH node.
 
-## Current status
+> **Status and safety:** Repository packaging and configuration are not proof of successful live mining. Validate installation, BCHN connectivity, miner connections, share acceptance, and block submission before relying on it for mainnet mining. A share is not a block, and a block candidate is not a confirmed reward.
 
-- Engine source pinned to CashStratum `v1.2.4` at image build time.
-- **Main-branch image build and publish workflow succeeded** for `linux/amd64` and `linux/arm64`.
-- The published image is intended to be available at `ghcr.io/wx256-min/bchn-solo:latest`. Verify that it can be pulled on your Umbrel before relying on it.
-- CI verifies compilation and packaging only. BCHN regtest end-to-end testing (miner connection, share handling, and block-candidate submission) is still required before mainnet mining.
-- A browser monitoring dashboard displays pool/node health, hashrate, workers/users, recent share records, persistent accepted/rejected share-record counts, recent pool events, and a block-found summary. Accepted/rejected counts count individual records from the initial `/shares` snapshot (up to 1,000 records) plus new records observed afterward; the API does not provide complete lifetime totals. The private CashStratum operator API key stays server-side and the API listens only on the internal Docker network. The pool listens for Stratum V1 miners on TCP port `3333`.
-- The pool preflights its generated config using CashStratum's parser, uses integer difficulty fields, places ZMQ at the BCHN node's `zmqnotify` field, and enables sharelog output for monitoring. Failed preflight diagnostics are printed with the payout address and RPC credentials redacted. On container restart, the entrypoint removes only the non-persistent `/tmp/bchn-solo` runtime socket directory so stale `main.pid` files cannot block startup. The Docker build disables upstream CPU-feature auto-detection and uses portable SHA-256 code to avoid SIGILL/invalid-opcode crashes when deployed on older x86_64 or ARM64 CPUs.
+## What is included
 
-## Features and defaults
+- **Umbrel app ID:** `wxbch-solostrike-cash`
+- **App name:** LoneStrike Cash (BCHN)
+- **Stratum V1:** host TCP port `3335`
+- **Stratum V2:** host TCP port `33333`
+- **Dashboard:** served through the Umbrel app proxy on internal port `3000`
+- **Node dependency:** existing Umbrel `bitcoin-cash-node` app
+- **Persistent app data:** pool data/logs under `${APP_DATA_DIR}/data/pool` and SV2 data under `${APP_DATA_DIR}/data/sv2`
 
-- Solo mining: a miner's BCH CashAddr in the Stratum username is the payout destination.
-- `POOL_FEE_PERCENT=0` by default.
-- BCHN JSON-RPC for templates and block submission; optional BCHN ZMQ block notifications.
-- Persistent data and logs under the Docker volume `/data`.
-- Multi-architecture container build intended for `linux/amd64` and `linux/arm64`.
-- Runs as an unprivileged container user.
+The app uses the upstream container images configured in `wxbch-solostrike-cash/docker-compose.yml`. Review those image sources and tags before updating them.
 
-## 1. Prepare BCHN
+## Architecture
 
-Your existing BCHN node must be fully synced and able to serve `getblocktemplate`. Configure authenticated RPC for the pool container and do not expose RPC to the public internet. If enabling ZMQ, configure BCHN to publish hash-block notifications and ensure the pool container can reach the configured ZMQ endpoint.
+The Umbrel Compose package defines these services:
 
-Do not assume `127.0.0.1` inside the pool container points to BCHN; it points to the pool container itself. Use a reachable node hostname or IP and the RPC port configured on your node.
+- **pool:** BCH pool engine, connected to BCHN RPC and ZMQ.
+- **dashboard:** pool status, workers, shares, and block-event UI/API.
+- **sv2-bridge:** bridge service connected to BCHN.
+- **sv2-pool:** Stratum V2 endpoint.
+- **app_proxy:** exposes the dashboard through Umbrel's app proxy.
 
-## 2. Configure the pool
+The app uses the existing BCHN node's RPC endpoint on port `8332` and hash-block ZMQ endpoint on port `28332`, as supplied by Umbrel's app environment. If your BCHN installation uses different ports or settings, verify compatibility before installing.
 
-```sh
-git clone https://github.com/Wx256-MIN/BCHN-SOLO.git
-cd BCHN-SOLO
-cp .env.example .env
-```
+## Install on UmbrelOS
 
-Edit `.env` and set:
-- `BCHN_RPC_URL`: BCHN RPC host and port, such as `192.168.1.20:8332`.
-- `BCHN_RPC_USER` and `BCHN_RPC_PASSWORD`: the RPC credentials configured on your node.
-- `BCH_PAYOUT_ADDRESS`: your own valid mainnet BCH CashAddr.
-- `BCHN_ZMQ_ENABLED`: set to `true` only after ZMQ is configured and reachable; otherwise keep it `false`.
-- Keep `POOL_FEE_PERCENT=0` for zero-fee solo mining.
+1. Ensure the **Bitcoin Cash Node** app is installed, fully synced, and healthy.
+2. In Umbrel, add this repository as a community app store if it is not already listed:
+   `https://github.com/Wx256-MIN/BCHN-SOLO`
+3. Find and install **LoneStrike Cash (BCHN)** (`wxbch-solostrike-cash`).
+4. Open the app dashboard and verify that it can reach BCHN and that node/pool status is healthy.
+5. Configure and verify your own BCH payout address using the controls supported by the installed app version before connecting a miner.
+6. Confirm the miner connects and shares are accepted. Check the pool logs and BCHN directly for authoritative block and reward status.
 
-Never commit `.env`. Use strong RPC credentials and restrict RPC to the private network.
+If the app does not appear in the community store, check that the repository's root `umbrel-app-store.yml` and the app's `wxbch-solostrike-cash/umbrel-app.yml` are present on the default branch, then refresh/reload the store in Umbrel.
 
-## 3. Build and start
+## Miner connection settings
 
-```sh
-docker compose build
-docker compose up -d
-docker compose logs -f bchn-solo
-```
+Use the LAN address of your Umbrel host, not `localhost` on a separate miner.
 
-The first build downloads the pinned CashStratum release source and compiles it inside the image. This requires internet access during the image build. To stop the pool:
+| Setting | Stratum V1 | Stratum V2 |
+| --- | --- | --- |
+| Host TCP port | `3335` | `33333` |
+| Pool URL example | `stratum+tcp://YOUR_UMBREL_LAN_IP:3335` | Depends on miner/client SV2 support and configuration |
+| Payout | Verify the configured BCH payout address in the installed app | Verify the configured BCH payout address in the installed app |
 
-```sh
-docker compose down
-```
+Not all miners support Stratum V2. Use the protocol and connection format documented by your miner's firmware. Never use an example address as a payout address; verify that the configured address is yours and valid for BCH mainnet.
 
-The `/data` volume preserves configuration and logs across restarts.
+## BCHN requirements
 
-## 4. Configure a miner
+- BCHN must be fully synchronized and able to serve block-template requests.
+- RPC access must be available to the app through Umbrel's configured internal network.
+- Do not expose BCHN RPC to the public internet.
+- The app's Compose configuration expects hash-block ZMQ on port `28332`; verify that this endpoint is enabled and reachable in your BCHN setup.
+- Do not assume `127.0.0.1` inside one container points to another container or to the Umbrel host.
 
-Use your Umbrel/BCHN host's LAN IP address (not `localhost`) and these settings:
+## Data, upgrades, and removal
 
-| Miner field | Value |
-| --- | --- |
-| Pool URL | `stratum+tcp://YOUR_UMBREL_LAN_IP:3333` |
-| Username | `bitcoincash:q...YOUR_VALID_CASHADDR[.worker]` |
-| Password | `x` |
+The app's persistent pool and SV2 data live under its own `${APP_DATA_DIR}/data` paths. Keep backups before app upgrades, reinstallations, or removal.
 
-Use a valid BCH CashAddr that you control. Verify every character before connecting a miner: the solo pool builds the winning coinbase payout from the address supplied by the miner. A share is not a block, and a block candidate is not a reward until BCHN accepts it and consensus maturity requirements are met.
+Removing source files from this GitHub repository does **not** uninstall an already installed Umbrel app or delete its persistent data. Conversely, deleting app data from Umbrel can be destructive; do not remove it unless you intend to erase the corresponding pool state and logs.
 
-## UmbrelOS
-
-The repository includes a community app-store package and a GHCR image publishing workflow. The Umbrel Compose app initializes shared `/data` permissions and a private operator API key, then runs the pool, read-only monitoring API, and setup/dashboard web server. The app still needs installation and runtime validation on an actual Umbrel device, followed by a BCHN regtest end-to-end test. Do not point mainnet miners at an untested image.
-
-The Umbrel Compose file uses the official `bitcoin-cash-node` app's RPC endpoint on port `8332` and hash-block ZMQ endpoint on port `28332`. If your node is from a different community app store or uses custom ports, verify its connection settings before installation.
-
-## Upstream and licensing
-
-The mining engine is [CashStratum](https://github.com/cashstratum/cashstratum), derived from CKPool and licensed under GPL-3.0. See [UPSTREAM.md](UPSTREAM.md) and [COPYING](COPYING). The Dockerfile pins the upstream source tag; review upstream changes before changing that pin.
+The former `wxbch-solo-pool/` package has been removed from the repository. The current app package is `wxbch-solostrike-cash/`.
 
 ## Security notes
 
-- Never publish BCHN RPC credentials or expose RPC to the internet.
-- Do not commit `.env`, wallet seeds, private keys, or passwords.
-- Check that the payout address belongs to you before mining.
-- Treat a public Stratum port as an untrusted network service; use LAN/VPN access unless you intentionally harden and expose it.
+- Never publish BCHN RPC credentials, wallet seeds, private keys, or passwords.
+- Restrict RPC to the private network and only the services that require it.
+- Treat public Stratum ports as untrusted network services. Prefer LAN or VPN access unless you have intentionally secured and exposed them.
+- Verify payout address, node health, accepted shares, and actual block status independently. Dashboard events and logs alone are not proof of a confirmed block or payment.
 
+## Repository layout
 
-## Feature parity additions (0.2.15)
+- `wxbch-solostrike-cash/umbrel-app.yml` — Umbrel app manifest.
+- `wxbch-solostrike-cash/docker-compose.yml` — app service definitions, ports, dependencies, and persistent mounts.
+- `wxbch-solostrike-cash/icon.svg` — app icon.
+- `.github/workflows/solostrike-cash-preflight.yml` — package preflight checks.
+- `umbrel-app-store.yml` — repository app-store metadata.
 
-- **Electricity cost calculator:** saves tariff per kWh and total rig watts separately from payout settings in persistent app data. Shows daily and 30-day kWh/cost estimates; it does not estimate mining revenue or profitability.
-- **Worker share quality:** groups the currently retained recent share records by worker and shows accepted/rejected counts plus rejection percentage. This is a bounded recent sample, not lifetime worker totals.
-- Existing BCHN node health, pool stats, Closest Strike comparison, block events, recent shares, and Stratum V1 connection settings remain in place. Stratum V2 is not part of this project.
+## Support and upstream
 
-
-### Operator diagnostics (0.2.17)
-
-- **Read-only diagnostic checklist:** summarizes monitoring API availability, pool log presence, BCHN node metrics, sync state, share-tracker readiness and pool-stat availability.
-- **Copy diagnostic report:** copies a sanitized JSON report for troubleshooting, with check status, guidance and API error summaries. It contains no RPC credentials and does not run repair actions.
-- This is advisory only. Confirm node synchronization and block acceptance directly with BCHN. Runtime difficulty/timeout controls remain excluded until an authenticated, validated control interface and safe rollback behavior exist.
-
-## Dashboard tools (0.2.16)
-
-- **Configurable auto-refresh:** choose 5, 15, 30, or 60 seconds, or turn automatic refresh off.
-- **Dashboard export:** export the current dashboard snapshot and retained recent shares as JSON for offline troubleshooting. The export contains the same sanitized dashboard fields shown in the UI.
-- **Miner configuration copy:** copy a Stratum V1 connection template; replace the example Umbrel LAN address with your actual host address.
-- **Share filters:** filter recent shares by worker name and accepted/rejected/unknown result without changing the underlying sample.
-- **Event search:** search visible pool log events locally in the browser.
-- **Worker last-seen estimate:** show the most recent timestamp found in the retained share sample per worker. This is not a live connection heartbeat and a connected but idle worker may not appear.
-- **Block event history:** show up to ten recent block-related events parsed from available pool logs. Confirm accepted blocks and rewards with BCHN; log parsing is not independent chain verification.
-- **Pool monitoring API uptime:** display the uptime value reported by the monitoring API process when available.
-
-These are monitoring and operator convenience features. The dashboard intentionally does **not** change pool difficulty, worker timeout, payout rules, or mining-engine settings at runtime: the current app does not expose a validated authenticated control API for those actions, and adding cosmetic controls would be unsafe. Stratum V2 remains excluded.
-
-
-## Metric history and troubleshooting proposals (0.2.19)
-
-- **Persistent metric history:** dashboard snapshots save hashrate (pool-reported 1m/5m/1h where available), worker/user counts, chain height, network difficulty, best share, and accepted/rejected difficulty values. The history is bounded to the latest 1,000 samples in `/data/hashrate-history.json`; it begins after this version starts and is not retroactive. If metrics are unavailable, the history records unavailable values rather than fabricating data.
-- **Hashrate chart and summary:** dashboard displays the retained hashrate trend, latest value, peak in the retained sample, network difficulty, and worker count. Pool hashrate units depend on CashStratum's returned metric format.
-- **Rules-first troubleshooting proposals:** the dashboard can analyze available health, node, and share-tracker status and save evidence-based next steps to `/data/agent-proposals.json`. Operators can approve or reject a proposal; review status is recorded.
-- **Read-only block verification:** when pool logs contain a candidate block hash and BCHN RPC credentials are available to the web service, the dashboard asks BCHN for the block header, height, confirmations, and coinbase transaction outputs. The output total includes transaction fees and is not a separately calculated subsidy or guaranteed miner reward. Events without a hash or RPC access remain unverified. Credentials stay server-side.
-- **Safety boundary:** this release does not use an LLM provider and does not execute proposed commands or fixes. Approving a proposal records approval only; it does not change pool settings, worker connections, repository files, or running services. This prevents a misleading or unauthenticated dashboard control from silently changing a live mining pool.
-- **Not yet included:** operational runtime difficulty/timeout controls and actual worker management actions. These remain proposal-only until an authenticated, validated action executor with rollback is available. Log events without a matching BCHN-verified block hash remain unverified.
+- Repository and issue tracker: https://github.com/Wx256-MIN/BCHN-SOLO
+- App package: https://github.com/Wx256-MIN/BCHN-SOLO/tree/main/wxbch-solostrike-cash
+- Upstream pool images are declared in `wxbch-solostrike-cash/docker-compose.yml`. Their behavior and availability are subject to their maintainers; review them before production use.
