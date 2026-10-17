@@ -1,0 +1,54 @@
+name: LoneStrike Cash preflight
+on:
+  push:
+    paths:
+      - "solostrike-cash/**"
+      - ".github/workflows/solostrike-cash-preflight.yml"
+  pull_request:
+    paths:
+      - "solostrike-cash/**"
+      - ".github/workflows/solostrike-cash-preflight.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check shell syntax
+        run: bash -n solostrike-cash/preflight.sh
+      - name: Validate compose and manifest YAML
+        run: |
+          python -m pip install --disable-pip-version-check pyyaml
+          python - <<'PY'
+          import yaml
+          with open("solostrike-cash/docker-compose.yml", encoding="utf-8") as f:
+              compose = yaml.safe_load(f)
+          with open("solostrike-cash/umbrel-app.yml", encoding="utf-8") as f:
+              manifest = yaml.safe_load(f)
+          assert "pool" in compose["services"]
+          assert "dashboard" in compose["services"]
+          assert "sv2-bridge" in compose["services"]
+          assert "sv2-pool" in compose["services"]
+          assert manifest["id"] == "sslabs-solostrike-cash"
+          assert "bitcoin-cash-node" in manifest["dependencies"]
+          for service in ("pool", "dashboard", "sv2-bridge"):
+              env = compose["services"][service].get("environment", {})
+              assert any("APP_BITCOIN_CASH_NODE_RPC_USER" in str(v) for v in env.values()), service
+              assert any("APP_BITCOIN_CASH_NODE_RPC_PASS" in str(v) for v in env.values()), service
+          print("Compose/manifest structure and BCHN RPC environment wiring look valid.")
+          PY
+      - name: Check upstream image manifests exist
+        run: |
+          set -euo pipefail
+          for image in \
+            ghcr.io/danhaus93-ops/asicseer-pool:latest \
+            ghcr.io/danhaus93-ops/solostrike-cash-dashboard:latest \
+            ghcr.io/danhaus93-ops/bchn-sv2-bridge:latest \
+            ghcr.io/danhaus93-ops/lonestrike-sv2-pool:latest; do
+            docker buildx imagetools inspect "$image" >/dev/null
+            echo "Image manifest available: $image"
+          done
