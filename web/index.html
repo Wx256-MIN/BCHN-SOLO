@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>BCHN-SOLO · Pool Monitor</title>
-<link id="appFavicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=0.2.1">
+<link id="appFavicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=0.2.25">
 <style>
 :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#ecf2f8;background:#0b1016;font-synthesis:none;color-scheme:dark}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top left,#132128 0,#0b1016 43rem);line-height:1.45}
@@ -401,6 +401,57 @@ body.dark-mode .sidebar-status{background:#061c30}
 @media(max-width:760px){.dashboard-tabs{margin:0 -1px 13px;gap:4px}.dashboard-tab{padding:10px 11px}.dashboard-tab span{font-size:10px}.theme-toggle{font-size:10px;padding:7px 8px}}
 @media(prefers-reduced-motion:reduce){.tab-panel{animation:none}.dashboard-tab{transition:none}}
 
+
+/* LoneStrike-inspired dark green/mint skin. Keep BCHN-SOLO's own layout and API IDs. */
+body.dark-mode,body.dark-mode .shell{background:radial-gradient(110% 90% at 50% -10%,#0c3a2f 0%,#08221c 43%,#051914 100%);color:#e6f4ee}
+body.dark-mode .dashboard-top-strip{background:#051914;color:#9fc2b4;border-bottom:1px solid #11473b}
+body.dark-mode .pool-sidebar{background:linear-gradient(180deg,#08221c 0%,#073127 55%,#051914 100%);border-right:1px solid #18594a}
+body.dark-mode .sidebar-brand small,body.dark-mode .sidebar-nav a{color:#a4c6b8}
+body.dark-mode .sidebar-nav a span{color:#5fbda0}
+body.dark-mode .sidebar-nav a:hover{background:#10b98118;color:#f0fff8}
+body.dark-mode .sidebar-nav a.active{background:#0d6c51;border-color:#10b981;color:#f4fff9;box-shadow:0 5px 14px #001a3029}
+body.dark-mode .sidebar-nav a.active span{color:#d4fff0}
+body.dark-mode .sidebar-status{background:#08221c;border-color:#18594a;color:#e6f4ee}
+body.dark-mode .sidebar-status small{color:#8db5a4}
+body.dark-mode .sidebar-status .sidebar-version{color:#34d399}
+body.dark-mode .topbar{background:linear-gradient(180deg,#0a2e26,#08221c);border-color:#18594a}
+body.dark-mode .brand h1,body.dark-mode .intro h2,body.dark-mode .section-head h3,body.dark-mode .panel summary{color:#e6f4ee}
+body.dark-mode .eyebrow,body.dark-mode .sub,body.dark-mode .updated,body.dark-mode .card-label,body.dark-mode .card-foot,body.dark-mode .section-head small,body.dark-mode .inline-note,body.dark-mode .panel p,body.dark-mode .footer{color:#8fb3a4}
+body.dark-mode .card,body.dark-mode .panel,body.dark-mode .block-found-panel,body.dark-mode .strike-card{background:linear-gradient(180deg,#0a2e26,#08221c);border-color:#18594a;color:#e6f4ee;box-shadow:0 8px 24px #00000018}
+body.dark-mode .big,body.dark-mode .chain-stat strong,body.dark-mode .block-metric strong{color:#f1fff8}
+body.dark-mode .mini-chip,body.dark-mode .chain-stat,body.dark-mode .config-item,body.dark-mode .event,body.dark-mode .tabbar{background:#0a2e26;border-color:#18594a;color:#a7c8ba}
+body.dark-mode .status-pill{background:#0a2e26;border-color:#18594a;color:#d4efe4}
+body.dark-mode .dot.online,body.dark-mode .sidebar-status-dot{background:#10b981;box-shadow:0 0 0 4px #10b98120}
+body.dark-mode .button{background:#0d3a30;border-color:#18594a;color:#dff8ed}
+body.dark-mode .button:hover{background:#11473b}
+body.dark-mode .button.primary,body.dark-mode .dashboard-tab.active,body.dark-mode .tab-button.active{background:#087f62;border-color:#10b981;color:#f4fff9}
+body.dark-mode .button.primary:hover{background:#0b9a73}
+body.dark-mode .dashboard-tabs{background:#08221c;border-color:#18594a}
+body.dark-mode .dashboard-tab{color:#9fc2b4}
+body.dark-mode .dashboard-tab:hover{background:#0d3a30;color:#f4fff9}
+body.dark-mode input,body.dark-mode select,body.dark-mode textarea,body.dark-mode .field input{background:#051914!important;color:#e6f4ee!important;border-color:#18594a!important}
+body.dark-mode th{color:#8fb3a4;border-color:#18594a}
+body.dark-mode td{color:#d2e9df;border-color:#11473b}
+body.dark-mode .progress,body.dark-mode .strike-meter{background:#164438;border-color:#18594a}
+body.dark-mode .progress>span,body.dark-mode .strike-meter span{background:linear-gradient(90deg,#10b981,#34d399)}
+body.dark-mode .block-found-panel{background:linear-gradient(110deg,#0d3a30,#08221c 58%,#071c17);border-color:#94722c}
+body.dark-mode .block-found-heading span{background:#08221c;border-color:#34d399;color:#34d399}
+body.dark-mode .block-metric span{color:#8fb3a4}
+body.dark-mode .block-art{color:#34d399}
+body.dark-mode .strike-value{color:#34d399}
+body.dark-mode .protocol-pill{background:#0a2e26;border-color:#18594a;color:#9ce5c8}
+body.dark-mode .field label{color:#b9d5c9}
+body.dark-mode .config-item code{color:#34d399}
+body.dark-mode .message{color:#a4c6b8}
+body.dark-mode .tag.muted{background:#164438;color:#c3e0d4}
+body.dark-mode .tag.ok{background:#103c32;color:#78e0b8}
+body.dark-mode .tag.bad{background:#4a202b;color:#ffb6bf}
+body.dark-mode .empty{color:#8fb3a4}
+body.dark-mode #hashrateChart svg line{stroke:#18594a!important}
+body.dark-mode #hashrateChart svg polyline{stroke:#34d399!important}
+body.dark-mode #hashrateChart svg text{fill:#8fb3a4!important}
+@media(prefers-reduced-motion:reduce){body *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -420,7 +471,7 @@ body.dark-mode .sidebar-status{background:#061c30}
     <a href="#troubleshootingAgentPanel"><span>✧</span>AI Troubleshooter</a>
     <a href="#setupPanel"><span>⚑</span>Pool Setup</a>
   </nav>
-  <div class="sidebar-status"><span class="sidebar-status-dot"></span><strong>BCHN-SOLO</strong><small>Monitoring & control</small><small class="sidebar-version">App v0.2.20</small></div>
+  <div class="sidebar-status"><span class="sidebar-status-dot"></span><strong>BCHN-SOLO</strong><small>Monitoring & control</small><small class="sidebar-version">App v0.2.25</small></div>
 </aside>
 <div class="dashboard-top-strip"><span>BITCOIN CASH · SOLO MINING</span><span>POOL MONITOR &nbsp; • &nbsp; LIVE STATUS</span></div>
 <div class="shell">
@@ -529,7 +580,7 @@ body.dark-mode .sidebar-status{background:#061c30}
       <div class="inline-note">Accepted and rejected cards count individual records from the initial API sample (up to 1,000) plus new records tracked afterward. The API sample does not provide complete lifetime totals, so older history may be missing. Miner IP addresses and payout usernames are intentionally not shown.</div>
 
       <div class="section-head" style="margin-top:18px"><h3>Worker share quality</h3><small>Recent tracked sample only</small></div>
-      <div class="table-wrap"><table><thead><tr><th>Worker</th><th>Accepted</th><th>Rejected</th><th>Reject rate</th></tr></thead><tbody id="workerShareRows"><tr><td colspan="4" class="empty">Waiting for share data…</td></tr></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>Worker</th><th>Recent shares</th><th>Accepted</th><th>Rejected</th><th>Best share diff</th><th>Reject rate</th></tr></thead><tbody id="workerShareRows"><tr><td colspan="4" class="empty">Waiting for share data…</td></tr></tbody></table></div>
       <div class="inline-note">Per-worker counts summarize the currently retained recent records, not lifetime totals. Unknown share results are excluded from the rejection-rate denominator.</div>
       <div class="section-head" style="margin-top:18px"><h3>Worker last seen</h3><small>Based on retained share sample</small></div><div class="table-wrap"><table><thead><tr><th>Worker</th><th>Last share time</th><th>Age</th></tr></thead><tbody id="workerLastSeenRows"><tr><td colspan="3" class="empty">Waiting for share data…</td></tr></tbody></table></div>
     </div>
@@ -681,7 +732,7 @@ body.dark-mode .sidebar-status{background:#061c30}
     if(toggle){toggle.setAttribute('aria-pressed',String(dark));toggle.textContent=dark?'☀ Light mode':'☾ Dark mode';toggle.title=dark?'Switch to light theme':'Switch to dark theme';}
     try{localStorage.setItem('bchn-solo-dashboard-theme',dark?'dark':'light');}catch(e){}
   }
-  let savedTheme='light';
+  let savedTheme='dark';
   try{savedTheme=localStorage.getItem('bchn-solo-dashboard-theme')||'light';}catch(e){}
   setTheme(savedTheme==='dark');
   if(toggle)toggle.addEventListener('click',()=>setTheme(!document.body.classList.contains('dark-mode')));
@@ -689,7 +740,7 @@ body.dark-mode .sidebar-status{background:#061c30}
 
 const appBase=(window.location.pathname.replace(/\/+$/,'')||'')+'/';
 const favicon=document.getElementById('appFavicon');
-if(favicon)favicon.href=appBase+'favicon.svg?v=0.2.1';
+if(favicon)favicon.href=appBase+'favicon.svg?v=0.2.25';
 const settingsUrl=appBase+'api/settings', dashboardUrl=appBase+'api/dashboard', sharesUrl=appBase+'api/shares';
 const electricityUrl=appBase+'api/electricity';
 const byId=id=>document.getElementById(id);
@@ -719,21 +770,24 @@ function updateWorkerShareSummary(items){
   const workers=new Map();
   for(const share of (Array.isArray(items)?items:[])){
     const name=String(share.worker||'default').slice(0,48);
-    if(!workers.has(name))workers.set(name,{accepted:0,rejected:0,known:0});
+    if(!workers.has(name))workers.set(name,{accepted:0,rejected:0,known:0,total:0,bestShare:null});
     const row=workers.get(name);
+    row.total++;
+    const shareDiff=num(share.sdiff);
+    if(shareDiff!==null&&(row.bestShare===null||shareDiff>row.bestShare))row.bestShare=shareDiff;
     if(share.result===true){row.accepted++;row.known++;}
     else if(share.result===false){row.rejected++;row.known++;}
   }
-  if(!workers.size){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=4;cell.className='empty';cell.textContent='No worker share records available yet.';row.append(cell);root.append(row);return;}
+  if(!workers.size){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=6;cell.className='empty';cell.textContent='No worker share records available yet.';row.append(cell);root.append(row);return;}
   for(const [name,counts] of [...workers.entries()].sort((a,b)=>a[0].localeCompare(b[0]))){
     const tr=document.createElement('tr'),rate=counts.known?100*counts.rejected/counts.known:null;
-    const values=[name,counts.accepted,counts.rejected,rate===null?'—':rate.toFixed(2)+'%'];
-    for(let i=0;i<values.length;i++){const td=document.createElement('td');td.textContent=String(values[i]);if(i===0){const span=document.createElement('span');span.className='worker';span.textContent=String(values[i]);td.replaceChildren(span);}if(i===3&&rate!==null){const tag=document.createElement('span');tag.className='tag '+(rate>1?'bad':'ok');tag.textContent=String(values[i]);td.replaceChildren(tag);}tr.append(td);}
+    const values=[name,counts.total,counts.accepted,counts.rejected,counts.bestShare===null?'Unavailable':fmtDifficulty(counts.bestShare),rate===null?'Unavailable':rate.toFixed(2)+'%'];
+    for(let i=0;i<values.length;i++){const td=document.createElement('td');td.textContent=String(values[i]);if(i===0){const span=document.createElement('span');span.className='worker';span.textContent=String(values[i]);td.replaceChildren(span);}if(i===5&&rate!==null){const tag=document.createElement('span');tag.className='tag '+(rate>1?'bad':'ok');tag.textContent=String(values[i]);td.replaceChildren(tag);}tr.append(td);}
     root.append(tr);
   }
 }
 
-function showBlockHistory(items,verified=[]){const root=byId('blockHistoryRows');root.replaceChildren();const byHash=new Map((Array.isArray(verified)?verified:[]).map(v=>[v.block_hash,v]));if(!Array.isArray(items)||!items.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=4;td.className='empty';td.textContent='No block events recorded in available logs.';tr.append(td);root.append(tr);return;}for(const item of items.slice(0,10)){const tr=document.createElement('tr');const proof=byHash.get(item.block_hash);const proofText=proof?'Height '+(proof.height??'—')+' · '+(proof.confirmations??'—')+' conf. · Coinbase outputs '+(proof.coinbase_output_bch===null||proof.coinbase_output_bch===undefined?'—':proof.coinbase_output_bch)+' BCH':(item.block_hash?'Hash found; RPC verification unavailable':'No block hash in log');const values=[item.timestamp||'—',item.result||'Event',item.details||'Block-related log event',proofText];values.forEach((v,i)=>{const td=document.createElement('td');if(i===1){const tag=document.createElement('span');tag.className='tag '+(v==='Accepted'?'ok':v==='Rejected'?'bad':'muted');tag.textContent=String(v);td.append(tag);}else td.textContent=String(v);tr.append(td);});root.append(tr);}}
+function showBlockHistory(items,verified=[]){const root=byId('blockHistoryRows');root.replaceChildren();const byHash=new Map((Array.isArray(verified)?verified:[]).map(v=>[v.block_hash,v]));if(!Array.isArray(items)||!items.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=4;td.className='empty';td.textContent='No block events recorded in available logs.';tr.append(td);root.append(tr);return;}for(const item of items.slice(0,10)){const tr=document.createElement('tr');const proof=byHash.get(item.block_hash);const proofText=proof?'Height '+(proof.height??'—')+' · '+(proof.confirmations??'—')+' conf. · Coinbase outputs '+(proof.coinbase_output_bch===null||proof.coinbase_output_bch===undefined?'—':proof.coinbase_output_bch)+' BCH':(item.block_hash?'Hash found; RPC verification unavailable':'No block hash in log');const values=[item.timestamp||'—',item.result||'Event',item.details||'Block-related log event',proofText];values.forEach((v,i)=>{const td=document.createElement('td');if(i===1){const tag=document.createElement('span');tag.className='tag '+(v==='Accepted'?'ok':v==='Rejected'?'bad':'muted');tag.textContent=String(v);td.append(tag);}else if(i===2&&item.block_hash&&/^[0-9a-f]{64}$/i.test(item.block_hash)){td.textContent=String(v)+' ';const link=document.createElement('a');link.href='https://blockchair.com/bitcoin-cash/block/'+item.block_hash;link.target='_blank';link.rel='noopener noreferrer';link.textContent='View block';link.style.color='var(--mint)';link.style.textDecoration='underline';td.append(link);}else td.textContent=String(v);tr.append(td);});root.append(tr);}}
 function updateBlockSummary(items){
   const latest=Array.isArray(items)&&items.length?items[0]:null;
   const status=byId('blockStatus');
@@ -753,19 +807,20 @@ function updateBlockSummary(items){
   text('blockStatus',label);status.className='tag '+(label==='Accepted'?'ok':label==='Rejected'?'bad':'muted');
   text('blockDetails',details||'A block-related event appeared in the pool logs. Confirm the outcome with BCHN before treating it as a reward.');
 }
-function renderDiagnostics(d){const health=d.health||{},stats=d.stats||{},node=stats.node||{},summary=d.share_summary||{},errors=d.errors||{};const checks=[];const add=(name,ok,detail)=>checks.push({name,ok,detail});add('Monitoring API',health.api_up===true,health.api_up?'Authenticated monitoring API responded.':(errors.health||'API unavailable; check container logs and startup.'));add('Pool log',health.log_exists===true,health.log_exists?'Pool log file is present.':'Log file missing; pool may still be starting or logging is misconfigured.');add('BCHN node data',Object.keys(node).length>0,Object.keys(node).length?'Node metrics are available.':(errors.stats||'Node metrics unavailable; check BCHN RPC connectivity and credentials.'));add('Blockchain sync',node.synced===true,node.synced===true?'Node reports synced.':node.ibd===true?'Initial block download is in progress.':'Sync is incomplete or status is unknown; verify BCHN before mining.');add('Share tracker',summary.tracker_ready===true,summary.tracker_ready===true?'Share tracker is initialized; totals are tracked from its baseline.':(summary.tracker_error||'Tracker is initializing; counts may not be ready yet.'));add('Pool statistics',stats.hashrate!==undefined&&stats.hashrate!==null&&stats.workers!==undefined&&stats.workers!==null,'Hashrate: '+(stats.hashrate??'unknown')+'; workers: '+(stats.workers??'unknown')+'.');const root=byId('diagnosticRows');root.replaceChildren();let failed=0;for(const c of checks){if(!c.ok)failed++;const tr=document.createElement('tr');const a=document.createElement('td');a.textContent=c.name;const b=document.createElement('td');const tag=document.createElement('span');tag.className='tag '+(c.ok?'ok':'bad');tag.textContent=c.ok?'OK':'CHECK';b.append(tag);const z=document.createElement('td');z.style.whiteSpace='normal';z.textContent=c.detail;tr.append(a,b,z);root.append(tr);}text('diagnosticSummary',failed===0?'All '+checks.length+' read-only checks look healthy.':' '+failed+' of '+checks.length+' checks need attention. This is guidance, not a guarantee that mining is healthy.');const report={generated_at:new Date().toISOString(),pool_status:d.status||'unknown',checks:checks.map(c=>({check:c.name,status:c.ok?'OK':'CHECK',guidance:c.detail})),api_errors:errors,notes:['Read-only diagnostic report.','Share counts are limited to the tracker baseline and subsequent records.','Block events are log-derived; verify accepted blocks with BCHN.','No settings or mining behavior were changed.']};byId('copyDiagnosticReport').onclick=()=>{const blob=JSON.stringify(report,null,2);if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(blob).then(()=>{text('diagnosticSummary','Diagnostic report copied.');}).catch(()=>{text('diagnosticSummary','Clipboard unavailable; use Export JSON instead.');});}else{text('diagnosticSummary','Clipboard unavailable in this browser.');}};}
+function renderDiagnostics(d){const health=d.health||{},stats=d.stats||{},node=stats.node||{},summary=d.share_summary||{},errors=d.errors||{},history=(d.history&&Array.isArray(d.history.samples))?d.history.samples:[],validHistory=history.filter(p=>num(p.hashrate)!==null&&num(p.timestamp)!==null).length;const checks=[];const add=(name,ok,detail)=>checks.push({name,ok,detail});add('Monitoring API',health.api_up===true,health.api_up?'Authenticated monitoring API responded.':(errors.health||'API unavailable; check container logs and startup.'));add('Pool log',health.log_exists===true,health.log_exists?'Pool log file is present.':'Log file missing; pool may still be starting or logging is misconfigured.');add('BCHN node data',Object.keys(node).length>0,Object.keys(node).length?'Node metrics are available.':(errors.stats||'Node metrics unavailable; check BCHN RPC connectivity and credentials.'));add('Blockchain sync',node.synced===true,node.synced===true?'Node reports synced.':node.ibd===true?'Initial block download is in progress.':'Sync is incomplete or status is unknown; verify BCHN before mining.');add('Share tracker',summary.tracker_ready===true,summary.tracker_ready===true?'Share tracker is initialized; totals are tracked from its baseline.':(summary.tracker_error||'Tracker is initializing; counts may not be ready yet.'));add('Pool statistics',num(stats.hashrate)!==null&&num(stats.workers)!==null,'Hashrate: '+(stats.hashrate??'unavailable')+'; workers: '+(stats.workers??'unavailable')+'.');add('History metric quality',validHistory>=2,validHistory>=2?validHistory+' valid hashrate samples available.':validHistory+' valid hashrate samples out of '+history.length+' retained; check the CashStratum stats and Pool log metrics.');const root=byId('diagnosticRows');root.replaceChildren();let failed=0;for(const c of checks){if(!c.ok)failed++;const tr=document.createElement('tr');const a=document.createElement('td');a.textContent=c.name;const b=document.createElement('td');const tag=document.createElement('span');tag.className='tag '+(c.ok?'ok':'bad');tag.textContent=c.ok?'OK':'CHECK';b.append(tag);const z=document.createElement('td');z.style.whiteSpace='normal';z.textContent=c.detail;tr.append(a,b,z);root.append(tr);}text('diagnosticSummary',failed===0?'All '+checks.length+' read-only checks look healthy.':' '+failed+' of '+checks.length+' checks need attention. This is guidance, not a guarantee that mining is healthy.');const report={generated_at:new Date().toISOString(),pool_status:d.status||'unknown',checks:checks.map(c=>({check:c.name,status:c.ok?'OK':'CHECK',guidance:c.detail})),api_errors:errors,notes:['Read-only diagnostic report.','Share counts are limited to the tracker baseline and subsequent records.','Block events are log-derived; verify accepted blocks with BCHN.','No settings or mining behavior were changed.']};byId('copyDiagnosticReport').onclick=()=>{const blob=JSON.stringify(report,null,2);if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(blob).then(()=>{text('diagnosticSummary','Diagnostic report copied.');}).catch(()=>{text('diagnosticSummary','Clipboard unavailable; use Export JSON instead.');});}else{text('diagnosticSummary','Clipboard unavailable in this browser.');}};}
 function renderHashrateHistory(d){
   const history=(d.history&&Array.isArray(d.history.samples))?d.history.samples:[];
   const valid=history.filter(p=>num(p.hashrate)!==null&&num(p.timestamp)!==null);
-  const latest=valid.length?valid[valid.length-1]:null;
+  const latest=history.length?history[history.length-1]:null;
+  const validLatest=valid.length?valid[valid.length-1]:null;
   const peak=valid.reduce((best,p)=>!best||num(p.hashrate)>num(best.hashrate)?p:best,null);
-  text('historyLatestHashrate',latest?String(latest.hashrate):'—');
-  text('historyPeakHashrate',peak?String(peak.hashrate):'—');
-  text('historyNetworkDifficulty',latest?fmtDifficulty(latest.network_difficulty):'—');
-  text('historyLatestWorkers',latest?fmtNum(latest.workers):'—');
-  text('historyCaption',(d.history?.sample_count??history.length)+' retained samples · max '+(d.history?.retention_limit??1000));
+  text('historyLatestHashrate',validLatest?String(validLatest.hashrate):'Unavailable');
+  text('historyPeakHashrate',peak?String(peak.hashrate):'Unavailable');
+  text('historyNetworkDifficulty',latest&&num(latest.network_difficulty)!==null?fmtDifficulty(latest.network_difficulty):'Unavailable');
+  text('historyLatestWorkers',latest&&num(latest.workers)!==null?fmtNum(latest.workers):'Unavailable');
+  text('historyCaption',(d.history?.sample_count??history.length)+' retained samples · '+valid.length+' valid hashrate samples · max '+(d.history?.retention_limit??1000));
   const root=byId('hashrateChart');
-  if(valid.length<2){root.innerHTML='<div class="empty">History is being collected. At least two valid samples are needed to draw the chart.</div>';return;}
+  if(valid.length<2){root.innerHTML='<div class="empty">'+(history.length?'Only '+valid.length+' valid hashrate sample(s) out of '+history.length+' retained records. Waiting for real pool metrics; unavailable values are not treated as zero.':'No history samples have been collected yet. Check monitoring API health.')+'</div>';return;}
   const width=860,height=150,pad=22,values=valid.map(p=>num(p.hashrate)),lo=Math.min(...values),hi=Math.max(...values),range=(hi-lo)||1;
   const points=values.map((v,i)=>{const x=pad+i*(width-pad*2)/(values.length-1),y=height-pad-(v-lo)*(height-pad*2)/range;return x.toFixed(1)+','+y.toFixed(1)}).join(' ');
   const first=new Date(valid[0].timestamp*1000).toLocaleString(),lastTime=new Date(valid[valid.length-1].timestamp*1000).toLocaleString();
@@ -830,21 +885,22 @@ byId('refreshProposals').addEventListener('click',loadAgentProposals);
 function applyDashboard(d){latestDashboard=d;renderHashrateHistory(d);const status=d.status||'unavailable',health=d.health||{},stats=d.stats||{},node=stats.node||{},pool=d.pool_metrics||{},summary=d.share_summary||{},errors=d.errors||{};
   const dot=byId('statusDot');dot.className='dot '+(status==='online'?'online':status==='unavailable'?'offline':'');text('statusText',status==='online'?'Pool online':status==='starting'?'Starting':'Monitoring unavailable');
   text('poolStatus',status==='online'?'ONLINE':status==='starting'?'STARTING':'OFFLINE');text('poolStatusChip',status.toUpperCase());const uptime=num(health.uptime);text('poolUptime',uptime===null?'—':uptime>=86400?Math.floor(uptime/86400)+'d '+Math.floor((uptime%86400)/3600)+'h':uptime>=3600?Math.floor(uptime/3600)+'h '+Math.floor((uptime%3600)/60)+'m':Math.floor(uptime/60)+'m');text('poolStatusFoot',health.log_exists?'Pool log detected':health.api_up?'API is up; waiting for pool log':(errors.stats||errors.health||'Waiting for monitoring API'));
-  const rate1=pool.hashrate1m??stats.hashrate;text('hashrate',rate1===null||rate1===undefined||rate1===''?'—':rate1);text('hashrateFoot','5m average: '+(pool.hashrate5m??'—')+' · 1h: '+(pool.hashrate1hr??'—'));
-  text('workers',stats.workers===undefined?'—':fmtNum(stats.workers));text('users',stats.users===undefined?'—':fmtNum(stats.users));
+  const rate1=pool.hashrate1m??stats.hashrate;const rateMissing=rate1===null||rate1===undefined||rate1==='';text('hashrate',rateMissing?'Unavailable':rate1);text('hashrateFoot','5m average: '+(pool.hashrate5m??'Unavailable')+' · 1h: '+(pool.hashrate1hr??'Unavailable'));
+  text('workers',stats.workers===undefined||stats.workers===null?'Unavailable':fmtNum(stats.workers));text('users',stats.users===undefined||stats.users===null?'Unavailable':fmtNum(stats.users));
   const trackerReady=summary.tracker_ready===true;const sample=summary.sampled??0;text('accepted',trackerReady?fmtNum(summary.accepted):'—');text('rejected',trackerReady?fmtNum(summary.rejected):'—');const baseline=num(summary.baseline_records)??0;const foot=!trackerReady?'Starting share counter…':'Baseline '+fmtNum(baseline)+' + new records';text('acceptedFoot',foot);text('rejectedFoot',foot);
   text('bestshare',fmtDifficulty(pool.bestshare));text('luck',num(pool.luck)===null?'—':fmtNum(pool.luck)+'%');
-  const bestDiff=num(pool.bestshare),networkDiff=num(node.difficulty);
-  text('strikeBest',fmtDifficulty(pool.bestshare));text('strikeNetwork',fmtDifficulty(node.difficulty));
+  const networkDifficulty=node.difficulty??pool.network_difficulty??pool.networkdifficulty??pool.networkdiff;
+  const bestDiff=num(pool.bestshare),networkDiff=num(networkDifficulty);
+  text('strikeBest',fmtDifficulty(pool.bestshare));text('strikeNetwork',fmtDifficulty(networkDifficulty));
   const strikeRatio=bestDiff!==null&&networkDiff!==null&&bestDiff>0&&networkDiff>0?(bestDiff/networkDiff)*100:null;
   const strikePercent=strikeRatio===null?0:Math.min(100,strikeRatio);
   byId('strikeMeter').style.width=strikePercent+'%';
   byId('strikeMeter').parentElement.setAttribute('aria-valuenow',String(Math.round(strikePercent*100)/100));
   text('strikeValue',strikeRatio===null?'Waiting for metrics':(strikeRatio>=100?'Network target reached':fmtNum(strikeRatio)+'% of network target'));
   text('strikeNote',strikeRatio===null?'Need both best-share difficulty and live network difficulty to calculate the gauge.':'Estimated progress based on best share ÷ network difficulty. Mining remains probabilistic; this gauge is not a block prediction.');
-  const height=stats.block_height??node.blocks;text('height',height===undefined||height===null?'—':fmtNum(height));text('headers',node.headers===undefined?'—':fmtNum(node.headers));text('chain',node.chain||'—');text('netdiff',fmtDifficulty(node.difficulty));
+  const height=stats.block_height??node.blocks;text('height',height===undefined||height===null?'Unavailable':fmtNum(height));text('headers',node.headers===undefined||node.headers===null?'Unavailable':fmtNum(node.headers));text('chain',node.chain||'Unavailable');text('netdiff',fmtDifficulty(networkDifficulty));
   const synced=node.synced===true;const nodeKnown=Object.keys(node).length>0;text('chainChip',!nodeKnown?'Node status unavailable':synced?'Synced':node.ibd===true?'Initial sync':'Behind headers');
-  const progress=num(node.progress_pct);byId('syncProgress').style.width=(progress===null?0:Math.max(0,Math.min(100,progress)))+'%';text('syncNote',!nodeKnown?'Check BCHN RPC connectivity.':synced?'BCHN reports that initial download is complete.':'Sync progress: '+(progress===null?'unknown':fmtNum(progress)+'%')+'. Do not mine on a node that is not synced.');
+  const progress=num(node.progress_pct);byId('syncProgress').style.width=(progress===null?0:Math.max(0,Math.min(100,progress)))+'%';text('syncNote',!nodeKnown?'BCHN node metrics unavailable; check node/API connectivity.':synced?'BCHN reports that initial download is complete.':'Sync progress: '+(progress===null?'unavailable':fmtNum(progress)+'%')+'. Do not mine on a node that is not synced.');
   renderDiagnostics(d);showEvents(d.activity||[]);showBlockHistory(d.blocks||[],d.verified_blocks||[]);showShares(d.shares||[],summary.tracker_ready?'No new share records since tracking started.':(summary.tracker_error?'Share tracker unavailable: '+summary.tracker_error:'Initializing share-history tracker…'));updateBlockSummary(d.blocks||[]);text('shareCaption',shareFeedCaption(sample,summary.last_checked_at,summary.tracker_ready,summary.tracker_error));
   const stamp=num(d.generated_at);text('updated',stamp===null?'Update time unavailable':'Updated '+new Date(stamp*1000).toLocaleTimeString());
 }

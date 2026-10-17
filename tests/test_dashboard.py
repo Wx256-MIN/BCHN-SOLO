@@ -54,5 +54,40 @@ class DashboardRegressionTests(unittest.TestCase):
         self.assertIn('re.search(r"Pool:\\s*(\\{.*\\})", line)', source)
 
 
+    def test_history_renderer_distinguishes_invalid_samples_from_empty_history(self):
+        self.assertIn("valid hashrate samples", HTML)
+        self.assertIn("unavailable values are not treated as zero", HTML)
+        self.assertIn("text('historyLatestHashrate',validLatest?String(validLatest.hashrate):'Unavailable')", HTML)
+
+    def test_dark_theme_defaults_to_lonestrike_green_palette(self):
+        self.assertIn("let savedTheme='dark';", HTML)
+        self.assertIn("#051914", HTML)
+        self.assertIn("#34d399", HTML)
+
+    def test_history_normalizes_numeric_metrics_and_keeps_missing_values_null(self):
+        source = (ROOT / "docker" / "setup_server.py").read_text(encoding="utf-8")
+        self.assertIn("def _numeric_metric(value):", source)
+        self.assertIn('"hashrate": _first_numeric_metric(pool.get("hashrate1m"), pool.get("hashrate5m"), stats.get("hashrate"))', source)
+        self.assertIn('"network_difficulty": _first_numeric_metric(', source)
+        self.assertIn("math.isfinite(value)", source)
+
+    def test_dashboard_uses_pool_network_difficulty_fallback(self):
+        self.assertIn("pool.network_difficulty??pool.networkdifficulty??pool.networkdiff", HTML)
+
+    def test_worker_summary_includes_recent_count_and_best_share(self):
+        self.assertIn("Recent shares", HTML)
+        self.assertIn("Best share diff", HTML)
+        self.assertIn("bestShare:null", HTML)
+        self.assertIn("counts.bestShare", HTML)
+
+    def test_diagnostics_reports_history_metric_quality(self):
+        self.assertIn("History metric quality", HTML)
+        self.assertIn("valid hashrate samples out of", HTML)
+
+    def test_block_history_links_only_valid_block_hashes(self):
+        self.assertIn("https://blockchair.com/bitcoin-cash/block/", HTML)
+        self.assertIn("/^[0-9a-f]{64}$/i.test(item.block_hash)", HTML)
+
+
 if __name__ == "__main__":
     unittest.main()
