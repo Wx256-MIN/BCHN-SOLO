@@ -74,6 +74,20 @@ class DashboardRegressionTests(unittest.TestCase):
     def test_dashboard_uses_pool_network_difficulty_fallback(self):
         self.assertIn("pool.network_difficulty??pool.networkdifficulty??pool.networkdiff", HTML)
 
+    def test_worker_summary_includes_recent_count_and_best_share(self):
+        self.assertIn("Recent shares", HTML)
+        self.assertIn("Best share diff", HTML)
+        self.assertIn("bestShare: null", HTML)
+        self.assertIn("counts.bestShare", HTML)
+
+    def test_diagnostics_reports_history_metric_quality(self):
+        self.assertIn("History metric quality", HTML)
+        self.assertIn("valid hashrate samples out of", HTML)
+
+    def test_block_history_links_only_valid_block_hashes(self):
+        self.assertIn("https://blockchair.com/bitcoin-cash/block/", HTML)
+        self.assertIn("/^[0-9a-f]{64}$/i.test(item.block_hash)", HTML)
+
 
 if __name__ == "__main__":
     unittest.main()
