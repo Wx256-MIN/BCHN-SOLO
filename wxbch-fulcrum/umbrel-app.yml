@@ -2,7 +2,7 @@ manifestVersion: 1
 id: wxbch-fulcrum
 category: networking
 name: Fulcrum (BCH)
-version: "1.3.7"
+version: "1.3.8"
 icon: https://raw.githubusercontent.com/Wx256-MIN/BCHN-SOLO/main/wxbch-fulcrum/icon.svg
 tagline: Electrum server for your Bitcoin Cash node — connect your wallet
 description: >-
@@ -19,10 +19,10 @@ dependencies:
   - bitcoin-cash-node
 repo: https://github.com/Wx256-MIN/BCHN-SOLO
 support: https://github.com/Wx256-MIN/BCHN-SOLO/issues
-port: 80
+port: 3001
 gallery: []
 path: ""
 submitter: LoneStrike Labs
 releaseNotes: >-
-  Fixes community app-store discovery by using the required wxbch app ID prefix
-  and matching package directory. Reads RPC credentials from Umbrel settings.
+  Fixes dashboard port conflict by moving the web UI to port 3001 and using
+  dashboard image version 1.3.8. Existing Fulcrum data paths are unchanged.
