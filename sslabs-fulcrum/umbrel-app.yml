@@ -2,30 +2,28 @@ manifestVersion: 1
 id: sslabs-fulcrum
 category: networking
 name: Fulcrum (BCH)
-version: "1.3.6"
+version: "1.3.7"
 icon: https://raw.githubusercontent.com/danhaus93-ops/umbrel-bch-apps/master/sslabs-fulcrum/icon.svg
 tagline: Electrum server for your Bitcoin Cash node — connect your wallet
 description: >-
-  Fulcrum is a fast Electrum server for Bitcoin Cash. It indexes your own node
-  so wallets like Electron Cash and Sparrow connect privately to hardware you
-  control instead of a stranger's server.
+  Fulcrum is a fast Electrum server for Bitcoin Cash. It indexes your existing
+  Umbrel Bitcoin Cash Node so wallets can connect to infrastructure you control.
 
+  Requires the official bitcoin-cash-node app to be installed, fully synced,
+  and configured by Umbrel. The first index build takes time and uses additional
+  disk space. Connect wallets using the Electrum endpoints shown in the app.
 
-  Requires the Bitcoin Cash Node app. The first index build takes a while and
-  uses extra disk; once done, point your wallet at the endpoints shown in the app.
-
-  Donations are never expected — but if LoneStrike Labs apps are useful to you, they keep development going: qpp8hg2n60mhhlsr2apw6l60x5vrdq0vp5pq3j4gyt
-releaseNotes: >-
-  Corrects the donation address shown in the app description to a Bitcoin
-  Cash address (it previously showed a BTC address).
 developer: LoneStrike Labs
 website: https://github.com/cculianu/Fulcrum
 dependencies:
-  - sslabs-bitcoin-cash-node
-repo: https://github.com/danhaus93-ops/umbrel-bch-apps
-support: https://github.com/danhaus93-ops/umbrel-bch-apps/issues
-port: 3331
+  - bitcoin-cash-node
+repo: https://github.com/Wx256-MIN/BCHN-SOLO
+support: https://github.com/Wx256-MIN/BCHN-SOLO/issues
+port: 80
 gallery: []
 path: ""
 submitter: LoneStrike Labs
-submission: https://github.com/danhaus93-ops/umbrel-bch-apps
+releaseNotes: >-
+  Aligns Fulcrum with the existing Umbrel bitcoin-cash-node app and reads RPC
+  credentials from Umbrel-provided environment variables instead of hard-coded
+  credentials. Keeps the Fulcrum index and TLS files in persistent app data.
