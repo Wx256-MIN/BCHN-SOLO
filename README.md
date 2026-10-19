@@ -2,7 +2,7 @@
 
 **A self-hosted Bitcoin Cash (BCH) solo-mining pool app for UmbrelOS, designed to use your existing Bitcoin Cash Node (BCHN).**
 
-This repository packages LoneStrike Cash as an Umbrel community app and includes a separate optional `sslabs-fulcrum` Electrum server package. Fulcrum is a wallet/indexing service, not a mining pool, and uses the existing `bitcoin-cash-node` app rather than launching another node.
+This repository packages LoneStrike Cash as an Umbrel community app and includes a separate optional `wxbch-fulcrum` Electrum server package. Fulcrum is a wallet/indexing service, not a mining pool, and uses the existing `bitcoin-cash-node` app rather than launching another node.
 
 > **Status and safety:** Repository packaging and configuration are not proof of successful live mining or successful Fulcrum indexing. Validate installation, BCHN connectivity, miner connections, share acceptance, indexing progress, and wallet connections on Umbrel before relying on either app.
 
@@ -19,7 +19,7 @@ This repository packages LoneStrike Cash as an Umbrel community app and includes
 
 ### Fulcrum (BCH)
 
-- **Umbrel app ID:** `sslabs-fulcrum`
+- **Umbrel app ID:** `wxbch-fulcrum`
 - **Purpose:** Electrum server for Bitcoin Cash wallets; it indexes the existing BCHN node.
 - **Dashboard:** app proxy to the web service on internal port `80`
 - **Electrum TCP:** host port `50021`
@@ -70,9 +70,9 @@ Not all miners support Stratum V2. Follow the protocol and connection format doc
 
 - `wxbch-solostrike-cash/umbrel-app.yml` — mining pool manifest.
 - `wxbch-solostrike-cash/docker-compose.yml` — pool, dashboard, and SV2 services.
-- `sslabs-fulcrum/umbrel-app.yml` — Fulcrum manifest.
-- `sslabs-fulcrum/docker-compose.yml` — Fulcrum, config initializer, and dashboard services.
-- `sslabs-fulcrum/web/` — Nginx dashboard and proxy configuration.
+- `wxbch-fulcrum/umbrel-app.yml` — Fulcrum manifest.
+- `wxbch-fulcrum/docker-compose.yml` — Fulcrum, config initializer, and dashboard services.
+- `wxbch-fulcrum/web/` — Nginx dashboard and proxy configuration.
 - `umbrel-app-store.yml` — repository app-store metadata.
 
 ## Support and upstream

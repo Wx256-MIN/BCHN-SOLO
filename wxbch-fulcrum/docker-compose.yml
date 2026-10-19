@@ -1,7 +1,7 @@
 services:
   app_proxy:
     environment:
-      APP_HOST: sslabs-fulcrum_web_1
+      APP_HOST: wxbch-fulcrum_web_1
       APP_PORT: 80
 
   # Generate the runtime configuration from Umbrel's existing BCHN app settings.
@@ -57,13 +57,13 @@ services:
       - |
         mkfifo /tmp/logpipe 2>/dev/null || true
         ( while IFS= read -r l; do
-            printf '%s\n' "$$l"
+            printf '%s\\n' "$$l"
             case "$$l" in
               *"Processed height: "*)
                 h="$${l#*Processed height: }"
                 printf '%s' "$${h%%,*}" > /data/progress.txt
                 ;;
-              *"Block height "*,*"up-to-date"*)
+              *"Block height "*,"up-to-date"*)
                 h="$${l#*Block height }"
                 printf '%s' "$${h%%,*}" > /data/progress.txt
                 ;;
